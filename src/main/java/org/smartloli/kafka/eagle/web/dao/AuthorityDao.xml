@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.smartloli.kafka.eagle.web.dao.AuthorityDao">
+	<resultMap type="org.smartloli.kafka.eagle.web.pojo.AuthorityInfo" id="authorityInfoMap">
+		<result property="resourceId" column="resource_id" />
+		<result property="name" column="name" />
+		<result property="url" column="url" />
+		<result property="parentId" column="parent_id" />
+	</resultMap>
+
+	<select id="findRoleIdByUserId" parameterType="int" resultType="Integer">
+		select role_id from ke_user_role where user_id=#{userId}
+	</select>
+
+	<select id="findAuthorityByRoleIds" resultMap="authorityInfoMap">
+		select * from ke_role_resource
+		where
+        role_id in
+        <foreach collection="roleIdList" item="roleId"  open="(" separator="," close=")">
+            #{roleId}
+        </foreach>
+	</select>
+
+	<select id="findAuthorityInfoByIds" resultMap="authorityInfoMap">
+		select * from ke_resources where
+        resource_id in
+        <foreach collection="resourceIdList" item="resourceId" open="(" separator="," close=")">
+            #{resourceId}
+        </foreach>
+	</select>
+
+	<select id="getResourcesTree" resultMap="authorityInfoMap">
+		select * from ke_resources
+	</select>
+
+	<insert id="insertResource" parameterType="map">
+		insert into ke_resources(name,url,parent_id) values(#{name},#{url},#{parentId})
+	</insert>
+
+	<select id="getResourceParent" resultMap="authorityInfoMap">
+		select * from ke_resources where parent_id=-1
+	</select>
+
+	<select id="findResourceByParentId" parameterType="int" resultMap="authorityInfoMap">
+		select * from ke_resources where parent_id=#{parentId}
+	</select>
+
+	<delete id="deleteParentOrChildByResId" parameterType="map">
+		delete from ke_resources
+		<where>
+			<if test="parentId!=null and parentId!=''">
+				resource_id=#{parentId} or parent_id=#{parentId}
+			</if>
+			<if test="resourceId!=null and resourceId!=''">
+				resource_id=#{resourceId}
+			</if>
+		</where>
+	</delete>
+
+</mapper>

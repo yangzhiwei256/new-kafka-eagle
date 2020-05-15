@@ -1,0 +1,20 @@
+## ignore file dir
+classes
+build
+target
+*.class
+.idea
+out
+*.ipr
+*.iws
+*.iml
+log
+*.log
+
+## eclipse
+*.project
+.settings
+.vscode
+.factorypath
+*.classpath
+bin
