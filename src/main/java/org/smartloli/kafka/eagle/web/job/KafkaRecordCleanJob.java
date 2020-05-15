@@ -23,6 +23,7 @@ import org.smartloli.kafka.eagle.web.service.MetricsService;
 import org.smartloli.kafka.eagle.web.util.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
@@ -44,7 +45,7 @@ public class KafkaRecordCleanJob {
     @Autowired
     private MetricsService metricsService;
 
-//    @Scheduled(cron = "0 0/5 * * * ?")
+    @Scheduled(cron = "0 0/5 * * * ?")
     protected void execute() {
         log.info("JOB IS RUNNING ===> {}", getClass().getSimpleName());
         if (kafkaEagleMetricsCharts) {

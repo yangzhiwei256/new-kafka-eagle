@@ -28,6 +28,7 @@ import org.smartloli.kafka.eagle.web.service.DashboardService;
 import org.smartloli.kafka.eagle.web.service.KafkaMetricsService;
 import org.smartloli.kafka.eagle.web.util.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -58,7 +59,7 @@ public class TopicRankJob {
     @Autowired
     private KafkaClustersConfig kafkaClustersConfig;
 
-    //    @Scheduled(cron = "0 0/5 * * * ?")
+    @Scheduled(cron = "0 0/5 * * * ?")
     protected void execute() {
         topicLogSizeStats();
         topicCapacityStats();
@@ -178,12 +179,12 @@ public class TopicRankJob {
         for (String clusterAlias : kafkaClustersConfig.getClusterAllAlias()) {
             List<String> topics = brokerService.topicList(clusterAlias);
             for (String topic : topics) {
-                long logsize = brokerService.getTopicRealLogSize(clusterAlias, topic);
+                long logSize = brokerService.getTopicRealLogSize(clusterAlias, topic);
                 TopicRank topicRank = new TopicRank();
                 topicRank.setCluster(clusterAlias);
                 topicRank.setTopic(topic);
                 topicRank.setTkey(TopicConstants.LOGSIZE);
-                topicRank.setTvalue(logsize);
+                topicRank.setTvalue(logSize);
                 topicRanks.add(topicRank);
                 if (topicRanks.size() > TopicConstants.BATCH_SIZE) {
 					try {

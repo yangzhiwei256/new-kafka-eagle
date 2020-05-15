@@ -31,6 +31,7 @@ import org.smartloli.kafka.eagle.web.service.KafkaService;
 import org.smartloli.kafka.eagle.web.service.MetricsService;
 import org.smartloli.kafka.eagle.web.util.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -63,7 +64,7 @@ public class KafkaTopicMetricsJob {
     @Autowired
     private KafkaClustersConfig kafkaClustersConfig;
 
-    //    @Scheduled(cron = "0 0/1 * * * ?")
+    @Scheduled(cron = "0 0/1 * * * ?")
     public void execute() {
         List<BScreenConsumerInfo> bscreenConsumers = new ArrayList<>();
         for (SingleClusterConfig singleClusterConfig : kafkaClustersConfig.getClusters()) {

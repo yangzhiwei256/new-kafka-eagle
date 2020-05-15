@@ -32,6 +32,7 @@ import org.smartloli.kafka.eagle.web.util.StrUtils;
 import org.smartloli.kafka.eagle.web.util.ZKMetricsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -75,7 +76,7 @@ public class KafkaMetricsJob {
 	@Autowired
 	private Mx4jService mx4jService;
 
-    //    @Scheduled(cron = "0 0/1 * * * ?")
+	@Scheduled(cron = "0 0/1 * * * ?")
     protected void execute() {
         if (kafkaEagleMetricsCharts) {
             Map<String, List<KafkaBrokerInfo>> kafkaBrokerInfoMap = kafkaService.getAllBrokerInfos(kafkaClustersConfig.getClusterAllAlias());

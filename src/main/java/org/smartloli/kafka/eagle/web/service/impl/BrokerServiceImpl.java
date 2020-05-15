@@ -548,15 +548,16 @@ public class BrokerServiceImpl implements BrokerService {
 	}
 
 	/** Get topic real logsize records. */
+	@Override
 	public long getTopicRealLogSize(String clusterAlias, String topic) {
         long logSize = 0L;
         if (KafkaConstants.CONSUMER_OFFSET_TOPIC.equals(topic)) {
             return logSize;
         }
-        KafkaZkClient zkc = KafkaResourcePoolUtils.getZookeeperClient(clusterAlias);
+        KafkaZkClient zookeeperClient = KafkaResourcePoolUtils.getZookeeperClient(clusterAlias);
         try {
-            if (zkc.pathExists(BROKER_TOPICS_PATH + "/" + topic)) {
-                Tuple2<Option<byte[]>, Stat> tuple = zkc.getDataAndStat(BROKER_TOPICS_PATH + "/" + topic);
+            if (zookeeperClient.pathExists(BROKER_TOPICS_PATH + "/" + topic)) {
+                Tuple2<Option<byte[]>, Stat> tuple = zookeeperClient.getDataAndStat(BROKER_TOPICS_PATH + "/" + topic);
                 String tupleString = new String(tuple._1.get());
                 JSONObject partitionObject = JSON.parseObject(tupleString).getJSONObject("partitions");
                 Set<Integer> partitions = new HashSet<>();
@@ -564,8 +565,7 @@ public class BrokerServiceImpl implements BrokerService {
                     try {
                         partitions.add(Integer.valueOf(partition));
                     } catch (Exception e) {
-                        log.error("Convert partition string to integer has error, msg is " + e.getCause().getMessage());
-                        e.printStackTrace();
+                        log.error("Convert partition string to integer has error", e);
                     }
                 }
                 if ("kafka".equals(kafkaClustersConfig.getClusterConfigByName(clusterAlias).getOffsetStorage())) {
@@ -575,12 +575,10 @@ public class BrokerServiceImpl implements BrokerService {
                 }
 			}
         } catch (Exception e) {
-            log.error("Get topic real logsize has error, msg is " + e.getCause().getMessage());
-            e.printStackTrace();
+            log.error("Get topic real logsize has error", e);
 		}
-		if (zkc != null) {
-            KafkaResourcePoolUtils.release(clusterAlias, zkc);
-            zkc = null;
+		if (zookeeperClient != null) {
+            KafkaResourcePoolUtils.release(clusterAlias, zookeeperClient);
         }
 		return logSize;
 	}

@@ -34,6 +34,7 @@ import org.smartloli.kafka.eagle.web.util.DateUtils;
 import org.smartloli.kafka.eagle.web.util.NetUtils;
 import org.smartloli.kafka.eagle.web.util.StrUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -61,7 +62,7 @@ public class KafkaAlertJob {
     @Autowired
     private IMService imService;
 
-//    @Scheduled(cron = "0 0/5 * * * ?")
+    @Scheduled(cron = "0 0/5 * * * ?")
     protected void execute() {
         consumer();
         cluster();
