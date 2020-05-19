@@ -109,18 +109,20 @@ public class TopicController {
 		return "/topic/list";
 	}
 
-	/** Topic metadata viewer. */
-	@GetMapping("/topic/meta/{tname}/")
+	/**
+     * Topic metadata viewer.
+     */
+    @GetMapping("/topic/meta/page/{tname}")
     @ApiOperation("跳转主题元数据页面")
-	public String topicMetaView(@PathVariable("tname") String tname, HttpServletRequest request) {
-		HttpSession session = request.getSession();
-		String clusterAlias = session.getAttribute(KafkaConstants.CLUSTER_ALIAS).toString();
-		if (topicService.hasTopic(clusterAlias, tname)) {
-			return "/topic/topic_meta";
-		} else {
-			return "/error/404";
-		}
-	}
+    public String topicMetaView(@PathVariable("tname") String tname, HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        String clusterAlias = session.getAttribute(KafkaConstants.CLUSTER_ALIAS).toString();
+        if (topicService.hasTopic(clusterAlias, tname)) {
+            return "/topic/topic_meta";
+        } else {
+            return "/error/404";
+        }
+    }
 
 	/** Create topic success viewer. */
 	@RequestMapping("/topic/create/success")
@@ -312,19 +314,19 @@ public class TopicController {
 		List<PartitionsInfo> topics = topicService.list(clusterAlias, map);
 		JSONArray aaDatas = new JSONArray();
 		for (PartitionsInfo partition : topics) {
-			JSONObject object = new JSONObject();
-			object.put("id", partition.getId());
-			object.put("topic", "<a href='/topic/meta/" + partition.getTopic() + "/' target='_blank'>" + partition.getTopic() + "</a>");
-			object.put("partitions", partition.getPartitionNumbers());
-			try {
-				long brokerSpread = partition.getBrokersSpread();
-				if (brokerSpread < TopicConstants.TOPIC_BROKER_SPREAD_ERROR) {
-					object.put("brokerSpread", "<a class='btn btn-danger btn-xs'>" + brokerSpread + "%</a>");
-				} else if (brokerSpread >= TopicConstants.TOPIC_BROKER_SPREAD_ERROR && brokerSpread < TopicConstants.TOPIC_BROKER_SPREAD_NORMAL) {
-					object.put("brokerSpread", "<a class='btn btn-warning btn-xs'>" + brokerSpread + "%</a>");
-				} else if (brokerSpread >= TopicConstants.TOPIC_BROKER_SPREAD_NORMAL) {
-					object.put("brokerSpread", "<a class='btn btn-success btn-xs'>" + brokerSpread + "%</a>");
-				} else {
+            JSONObject object = new JSONObject();
+            object.put("id", partition.getId());
+            object.put("topic", "<a href='/topic/meta/page/" + partition.getTopic() + "' target='_blank'>" + partition.getTopic() + "</a>");
+            object.put("partitions", partition.getPartitionNumbers());
+            try {
+                long brokerSpread = partition.getBrokersSpread();
+                if (brokerSpread < TopicConstants.TOPIC_BROKER_SPREAD_ERROR) {
+                    object.put("brokerSpread", "<a class='btn btn-danger btn-xs'>" + brokerSpread + "%</a>");
+                } else if (brokerSpread >= TopicConstants.TOPIC_BROKER_SPREAD_ERROR && brokerSpread < TopicConstants.TOPIC_BROKER_SPREAD_NORMAL) {
+                    object.put("brokerSpread", "<a class='btn btn-warning btn-xs'>" + brokerSpread + "%</a>");
+                } else if (brokerSpread >= TopicConstants.TOPIC_BROKER_SPREAD_NORMAL) {
+                    object.put("brokerSpread", "<a class='btn btn-success btn-xs'>" + brokerSpread + "%</a>");
+                } else {
 					object.put("brokerSpread", "<a class='btn btn-primary btn-xs'>" + brokerSpread + "%</a>");
 				}
 

@@ -144,10 +144,10 @@ public class DashboardServiceImpl implements DashboardService {
 			for (int i = 0; i < 10; i++) {
 				JSONObject object = new JSONObject();
 				if (i < topicRank.size()) {
-					object.put("id", index);
-					object.put("topic", "<a href='/topic/meta/" + topicRank.get(i).getTopic() + "/'>" + topicRank.get(i).getTopic() + "</a>");
-					object.put("logsize", topicRank.get(i).getTvalue());
-				} else {
+                    object.put("id", index);
+                    object.put("topic", "<a href='/topic/meta/page/" + topicRank.get(i).getTopic() + "'>" + topicRank.get(i).getTopic() + "</a>");
+                    object.put("logsize", topicRank.get(i).getTvalue());
+                } else {
 					object.put("id", index);
 					object.put("topic", "");
 					object.put("logsize", "");
@@ -160,10 +160,10 @@ public class DashboardServiceImpl implements DashboardService {
 			for (int i = 0; i < 10; i++) {
 				JSONObject object = new JSONObject();
 				if (i < topicRank.size()) {
-					object.put("id", index);
-					object.put("topic", "<a href='/topic/meta/" + topicRank.get(i).getTopic() + "/'>" + topicRank.get(i).getTopic() + "</a>");
-					object.put("capacity", StrUtils.stringify(topicRank.get(i).getTvalue()));
-				} else {
+                    object.put("id", index);
+                    object.put("topic", "<a href='/topic/meta/page/" + topicRank.get(i).getTopic() + "/'>" + topicRank.get(i).getTopic() + "</a>");
+                    object.put("capacity", StrUtils.stringify(topicRank.get(i).getTvalue()));
+                } else {
 					object.put("id", index);
 					object.put("topic", "");
 					object.put("capacity", "");
