@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="/public/css :: common_css(~{::title},~{})">
+    <title>Notice - KafkaEagle</title>
+</head>
+<body>
+<nav th:replace="/public/navbar :: common_navbar"></nav>
+<div id="wrapper">
+    <div id="page-wrapper">
+        <div class="row">
+            <div class="col-lg-12">
+                <h1 class="page-header">
+                    Notice <small>overview</small>
+                </h1>
+            </div>
+            <!-- /.col-lg-12 -->
+        </div>
+        <!-- /.row -->
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="alert alert-info alert-dismissable">
+                    <button type="button" class="close" data-dismiss="alert"
+                            aria-hidden="true">×
+                    </button>
+                    <i class="fa fa-info-circle"></i> <strong>Send a system
+                    announcement to notify the online user of that day about the
+                    emergency.</strong>
+                </div>
+            </div>
+        </div>
+        <!-- /.row -->
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-cogs fa-fw"></i> Edit
+                        <div class="pull-right"></div>
+                    </div>
+                    <!-- /.panel-heading -->
+                    <div class="panel-body">
+                        <form role="form" action="#" method="post"
+                              onsubmit="return contextFormValid();return false;">
+                            <div class="form-group">
+                                <label>Content</label>
+                                <textarea id="ke_notice_content" name="ke_notice_content"
+                                          class="form-control" placeholder="Max length is 120 words" rows="3"
+                                          maxlength="120"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="create-btn">Send
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <!-- /.col-lg-4 -->
+            </div>
+            <!-- /.row -->
+        </div>
+        <!-- /#page-wrapper -->
+    </div>
+</div>
+</body>
+<div th:replace="/public/script :: common_js(~{::script})">
+    <script th:src="@{/media/js/main/system/notice.js}" type="text/javascript"></script>
+</div>
+</html>

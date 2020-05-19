@@ -40,3 +40,16 @@ $(document).ready(function() {
 		});
 	});
 });
+
+function contextPasswdFormValid() {
+    var ke_new_password_name = $("#ke_new_password_name").val();
+    var resetRegular = /[\u4E00-\u9FA5]/;
+    if (ke_new_password_name.length === 0 || resetRegular.test(ke_new_password_name)) {
+        $("#alert_mssage").show();
+        setTimeout(function() {
+            $("#alert_mssage").hide()
+        }, 3000);
+        return false;
+    }
+    return true;
+}

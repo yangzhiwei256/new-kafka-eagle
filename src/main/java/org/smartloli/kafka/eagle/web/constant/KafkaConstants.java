@@ -61,9 +61,15 @@ public final class KafkaConstants {
 
     //KafkaConstants
     public static final String TITLE = "Kafka Eagle Alert";
-    public static final String LOGIN_USER_SESSION = "LOGIN_USER_SESSION";
+    public static final String LOGIN_USER_NAME = "LOGIN_USER_NAME";
+    public static final String SYSTEM_VERSION = "version";
     public static final String UNKNOW_USER = "__unknow__";
+
+    //错误提示新体
     public static final String ERROR_LOGIN = "error_msg";
+    //错误提示信息是否显示
+    public static final String ERROR_DISPLAY = "error_display";
+
     public static final String ADMIN = "admin";
     public static final int ADMINISTRATOR = 1; //管理员权限
     public static final int ANONYMOUS = 0; //匿名权限
@@ -90,6 +96,13 @@ public final class KafkaConstants {
     public static final String KAFKA_ZK_MIN_IDLE = "kafka.zk.min.idle";
     public static final String KAFKA_ZK_MAX_IDLE = "kafka.zk.max.idle";
     public static final String KAFKA_ZK_SESSION_TIMEOUT_MS = "kafka.zk.session.timeout.ms";
+    public static final String BROKER_IDS_PATH = "/brokers/ids";
+    public static final String BROKER_TOPICS_PATH = "/brokers/topics";
+    public static final String DELETE_TOPICS_PATH = "/admin/delete_topics";
+    public static final String CONSUMERS_PATH = "/consumers";
+    public static final String OWNERS = "/owners";
+    public static final String TOPIC_ISR = "/brokers/topics/%s/partitions/%s/state";
+
     @Value("${" + KAFKA_EAGLE_SQL_TOPIC_RECORDS_MAX + ":5000}")
     public static Long POSITION;
 

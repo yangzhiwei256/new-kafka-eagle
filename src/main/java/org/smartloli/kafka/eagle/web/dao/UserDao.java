@@ -25,18 +25,23 @@ import java.util.Map;
 
 /**
  * User interface definition
- * 
- * @author smartloli.
  *
- *         Created by May 16, 2017
+ * @author smartloli.
+ * <p>
+ * Created by May 16, 2017
  */
 public interface UserDao {
-	
-	int resetPassword(UserInfo signin);
 
-	List<UserInfo> findUserBySearch(Map<String, Object> params);
+    /**
+     * 重置密码
+     * @param userInfo
+     * @return
+     */
+    int resetPassword(UserInfo userInfo);
 
-	int userCounts();
+    List<UserInfo> findUserBySearch(Map<String, Object> params);
+
+    int userCounts();
 
     /**
      * 新增用户

@@ -27,6 +27,7 @@ import org.smartloli.kafka.eagle.web.config.SingleClusterConfig;
 import org.smartloli.kafka.eagle.web.constant.TopicConstants;
 import org.smartloli.kafka.eagle.web.protocol.bscreen.BScreenConsumerInfo;
 import org.smartloli.kafka.eagle.web.service.BrokerService;
+import org.smartloli.kafka.eagle.web.service.ConsumerService;
 import org.smartloli.kafka.eagle.web.service.KafkaService;
 import org.smartloli.kafka.eagle.web.service.MetricsService;
 import org.smartloli.kafka.eagle.web.util.DateUtils;
@@ -49,27 +50,24 @@ public class KafkaTopicMetricsJob {
     @Autowired
     private MetricsService metricsService;
 
-    /**
-     * Kafka service interface.
-     */
     @Autowired
     private KafkaService kafkaService;
 
-    /**
-     * Broker service interface.
-     */
     @Autowired
     private BrokerService brokerService;
 
     @Autowired
+    private ConsumerService consumerService;
+
+    @Autowired
     private KafkaClustersConfig kafkaClustersConfig;
 
-    @Scheduled(cron = "0 0/1 * * * ?")
+    @Scheduled(cron = "0 */10 * * * ?")
     public void execute() {
         List<BScreenConsumerInfo> bscreenConsumers = new ArrayList<>();
         for (SingleClusterConfig singleClusterConfig : kafkaClustersConfig.getClusters()) {
             if ("kafka".equals(singleClusterConfig.getOffsetStorage())) {
-                JSONArray consumerGroups = JSON.parseArray(kafkaService.getKafkaConsumer(singleClusterConfig.getAlias()));
+                JSONArray consumerGroups = JSON.parseArray(consumerService.getKafkaConsumer(singleClusterConfig.getAlias()));
                 for (Object object : consumerGroups) {
                     JSONObject consumerGroup = (JSONObject) object;
                     String group = consumerGroup.getString("group");
@@ -138,10 +136,10 @@ public class KafkaTopicMetricsJob {
                     }
                 }
             } else {
-                Map<String, List<String>> consumerGroups = kafkaService.getConsumers(singleClusterConfig.getAlias());
+                Map<String, List<String>> consumerGroups = consumerService.getConsumers(singleClusterConfig.getAlias());
                 for (Entry<String, List<String>> entry : consumerGroups.entrySet()) {
                     String group = entry.getKey();
-                    for (String topic : kafkaService.getActiveTopic(singleClusterConfig.getAlias(), group)) {
+                    for (String topic : kafkaService.findActiveTopics(singleClusterConfig.getAlias(), group)) {
                         BScreenConsumerInfo bscreenConsumer = new BScreenConsumerInfo();
                         bscreenConsumer.setCluster(singleClusterConfig.getAlias());
                         bscreenConsumer.setGroup(group);

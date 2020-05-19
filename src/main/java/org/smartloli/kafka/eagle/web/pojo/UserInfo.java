@@ -31,10 +31,13 @@ import lombok.Data;
 public class UserInfo {
 
     /**
-     * 用户id
+     * 数据库ID
      */
     private int id;
 
+    /**
+     * 用户ID
+     */
     private int rtxno;
 
     /**

@@ -7,7 +7,7 @@ $(document).ready(function() {
 		"bProcessing" : true,
 		"bServerSide" : true,
 		"fnServerData" : retrieveData,
-		"sAjaxSource" : "/system/role/table/ajax",
+		"sAjaxSource" : "/system/role/table",
 		"aoColumns" : [ {
 			"mData" : 'name'
 		}, {
@@ -39,7 +39,7 @@ $(document).ready(function() {
 		$.ajax({
 			type : 'get',
 			dataType : 'json',
-			url : '/system/role/resource/' + id + '/ajax',
+			url : '/system/role/resource/' + id ,
 			success : function(datas) {
 				if (datas != null) {
 					console.log(datas);

@@ -2,7 +2,7 @@ $(document).ready(function() {
 	$.ajax({
 		type : 'get',
 		dataType : 'json',
-		url : '/metrics/brokers/mbean/ajax',
+		url : '/metrics/brokers/mbean',
 		success : function(datas) {
 			if (datas != null) {
 				$("#kafka_metrics_tab").html("")

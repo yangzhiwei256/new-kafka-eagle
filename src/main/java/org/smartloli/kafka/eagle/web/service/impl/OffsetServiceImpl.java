@@ -85,7 +85,7 @@ public class OffsetServiceImpl implements OffsetService {
 		List<OffsetInfo> targets = new ArrayList<OffsetInfo>();
 		for (String partition : partitions) {
             int partitionInt = Integer.parseInt(partition);
-            OffsetZkInfo offsetZk = kafkaService.getOffset(clusterAlias, topic, group, partitionInt);
+            OffsetZkInfo offsetZk = kafkaService.getGroupTopicPartitionOffset(clusterAlias, topic, group, partitionInt);
             OffsetInfo offsetInfo = new OffsetInfo();
             long logSize = 0L;
             if ("kafka".equals(kafkaClustersConfig.getClusterConfigByName(clusterAlias).getOffsetStorage())) {
@@ -142,7 +142,7 @@ public class OffsetServiceImpl implements OffsetService {
 
 	/** Judge group & topic from KafkaConstants has exist. */
 	private boolean hasGroupTopic(String clusterAlias, String group, String topic) {
-		return kafkaService.findTopicAndGroupExist(clusterAlias, topic, group);
+		return kafkaService.findTopicExistInGroup(clusterAlias, topic, group);
 	}
 
 	/** Judge group & topic exist Kafka topic or KafkaConstants. */

@@ -17,6 +17,7 @@
  */
 package org.smartloli.kafka.eagle.web.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.smartloli.kafka.eagle.web.config.KafkaClustersConfig;
@@ -77,7 +78,7 @@ public class DashboardServiceImpl implements DashboardService {
      * Get consumer number from zookeeper.
      */
     private int getConsumerNumbers(String clusterAlias) {
-        Map<String, List<String>> consumers = kafkaService.getConsumers(clusterAlias);
+        Map<String, List<String>> consumers = consumerService.getConsumers(clusterAlias);
         int count = 0;
         for (Entry<String, List<String>> entry : consumers.entrySet()) {
             count += entry.getValue().size();
@@ -130,7 +131,7 @@ public class DashboardServiceImpl implements DashboardService {
         } else {
             dashboard.setConsumers(getConsumerNumbers(clusterAlias));
         }
-        return dashboard.toString();
+        return JSON.toJSONString(dashboard);
 	}
 
 	/** Get topic rank data,such as logsize and topic capacity. */

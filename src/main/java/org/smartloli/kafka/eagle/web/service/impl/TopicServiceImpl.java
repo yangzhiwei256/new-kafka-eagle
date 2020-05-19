@@ -20,6 +20,9 @@ package org.smartloli.kafka.eagle.web.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.smartloli.kafka.eagle.web.config.KafkaClustersConfig;
 import org.smartloli.kafka.eagle.web.constant.KafkaConstants;
 import org.smartloli.kafka.eagle.web.constant.MBeanConstants;
@@ -37,10 +40,12 @@ import org.smartloli.kafka.eagle.web.protocol.topic.TopicSqlHistory;
 import org.smartloli.kafka.eagle.web.service.*;
 import org.smartloli.kafka.eagle.web.sql.execute.KafkaSqlParser;
 import org.smartloli.kafka.eagle.web.util.DateUtils;
+import org.smartloli.kafka.eagle.web.util.KafkaResourcePoolUtils;
 import org.smartloli.kafka.eagle.web.util.StrUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,38 +62,69 @@ import java.util.Map.Entry;
  *         Update by hexiang 20170216
  */
 @Service
+@Slf4j
 public class TopicServiceImpl implements TopicService {
 
 	@Autowired
 	private TopicDao topicDao;
 
-	/** Kafka service interface. */
 	@Autowired
 	private KafkaService kafkaService;
 
 	@Autowired
 	private KafkaSqlParser kafkaSqlParser;
 
-    /**
-     * Kafka topic config service interface.
-     */
     @Autowired
     private KafkaMetricsService kafkaMetricsService;
 
-    /**
-     * Broker service interface.
-     */
     @Autowired
     private BrokerService brokerService;
 
-    /**
-     * Mx4j service interface.
-     */
     @Autowired
     private Mx4jService mx4jService;
 
     @Autowired
     private KafkaClustersConfig kafkaClustersConfig;
+
+    @Override
+    public Map<String, Object> createTopic(String clusterAlias, String topicName, String partitions, String replica) {
+        Map<String, Object> targets = new HashMap<>();
+        int brokers = kafkaService.getBrokerInfos(clusterAlias).size();
+        if (Integer.parseInt(replica) > brokers) {
+            targets.put("status", "error");
+            targets.put("info", "replication factor: " + replica + " larger than available brokers: " + brokers);
+            return targets;
+        }
+
+        AdminClient adminClient = KafkaResourcePoolUtils.getKafkaClient(clusterAlias);
+        try {
+            NewTopic newTopic = new NewTopic(topicName, Integer.parseInt(partitions), Short.parseShort(replica));
+            adminClient.createTopics(Collections.singleton(newTopic)).all().get();
+        } catch (Exception e) {
+            log.info("Create kafka topic has error", e);
+        } finally {
+            KafkaResourcePoolUtils.release(clusterAlias, adminClient);
+        }
+        targets.put("status", "success");
+        targets.put("info", "Create topic[" + topicName + "] has successed,partitions numbers is [" + partitions + "],replication-factor numbers is [" + replica + "]");
+        return targets;
+    }
+
+    @Override
+    public Map<String, String> deleteTopic(String clusterAlias, String topicName) {
+        Map<String, String> targets = new HashMap<>();
+        AdminClient adminClient = KafkaResourcePoolUtils.getKafkaClient(clusterAlias);
+        try {
+            adminClient.deleteTopics(Collections.singleton(topicName)).all().get();
+            targets.put("status", "success");
+        } catch (Exception e) {
+            log.error("Delete kafka topic has error", e);
+            targets.put("status", "failed");
+        } finally {
+            KafkaResourcePoolUtils.release(clusterAlias, adminClient);
+        }
+        return targets;
+    }
 
     /**
      * Find topic name in all topics.

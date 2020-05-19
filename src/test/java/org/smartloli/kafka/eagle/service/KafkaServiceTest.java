@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.smartloli.kafka.eagle.web.KafkaEagleBootstrap;
 import org.smartloli.kafka.eagle.web.constant.KafkaConstants;
+import org.smartloli.kafka.eagle.web.protocol.MetadataInfo;
 import org.smartloli.kafka.eagle.web.service.KafkaService;
 import org.smartloli.kafka.eagle.web.util.KafkaResourcePoolUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,5 +74,50 @@ public class KafkaServiceTest {
             log.info("主题：{},分区:{},当前偏移量:{}", topicPartition.topic(), topicPartition.partition(), offsetAndMetadata.offset());
         }
         KafkaResourcePoolUtils.release(cluster, adminClient);
+    }
+
+    /**
+     * 获取主题分区名
+     */
+    @Test
+    public void findTopicPartitionTest(){
+        List<String> partitions = kafkaService.findTopicPartition("cluster1", "MSG_OUTBOUND_APP3331");
+        log.info("分区信息 ==> {}", partitions);
+    }
+
+    /**
+     * 获取活跃主题信息
+     */
+    @Test
+    public void getActiveTopicTest(){
+        Map<String, List<String>> partitions = kafkaService.findActiveTopics("cluster1");
+        log.info("活跃主题信息 ==> {}", partitions);
+    }
+
+    /**
+     * 获取活跃主题信息
+     */
+    @Test
+    public void findActiveTopicsTest(){
+        Set<String> activeTopics = kafkaService.findActiveTopics("cluster1", KafkaConstants.KAFKA_EAGLE_SYSTEM_GROUP);
+        log.info("活跃主题信息 ==> {}", activeTopics);
+    }
+
+    /**
+     * 获取主题Leader信息
+     */
+    @Test
+    public void findKafkaLeaderTest(){
+        List<MetadataInfo> metadataInfos = kafkaService.findKafkaLeader("cluster1", "MSG_OUTBOUND_APP3331");
+        log.info("topic主题Leader消息 ==> {}", metadataInfos);
+    }
+
+    /**
+     * 获取主题分区复制分区信息
+     */
+    @Test
+    public void getTopicPartitionReplicasTest(){
+        String result = kafkaService.getTopicPartitionReplicas("cluster1", "MSG_OUTBOUND_APP3331", 2);
+        Assert.assertNotNull(result);
     }
 }

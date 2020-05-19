@@ -20,16 +20,19 @@ package org.smartloli.kafka.eagle.web.protocol;
 import lombok.Data;
 
 /**
- * Definition Kafka consumer detail information.
- *
+ * 主题消费者信息
  * @author smartloli.
- * <p>
  * Created by Aug 16, 2016
  */
 @Data
 public class TopicConsumerInfo  {
 
+    /** 消费者ID **/
     private int id;
+
+    /** 消费者主题名称 **/
     private String topic;
-    private int consumering;
+
+    /** 是否正在消费 **/
+    private int consuming;
 }

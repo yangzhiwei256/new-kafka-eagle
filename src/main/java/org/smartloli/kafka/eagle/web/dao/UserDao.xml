@@ -21,8 +21,10 @@
 	</delete>
 
 	<update id="resetPassword" parameterType="org.smartloli.kafka.eagle.web.pojo.UserInfo">
-		update ke_users set password=#{password} where username=#{username}
-	</update>
+        update ke_users
+        set password=#{password}
+        where rtxno = #{rtxno}
+    </update>
 
 	<select id="findUserById" parameterType="Integer" resultMap="userInfoMap">
 		select * from ke_users where id=#{id}

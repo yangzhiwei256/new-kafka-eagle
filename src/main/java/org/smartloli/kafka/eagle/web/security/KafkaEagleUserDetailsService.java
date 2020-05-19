@@ -11,11 +11,11 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,9 +31,6 @@ public class KafkaEagleUserDetailsService implements UserDetailsService {
     @Autowired
     private UserInfoService userInfoService;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
     /**
      * 获取用户名绑定用户信息
      * @param username 用户名
@@ -47,6 +44,8 @@ public class KafkaEagleUserDetailsService implements UserDetailsService {
         User.UserBuilder userBuilder = User.builder().username(username);
         UserInfo userInfo = userInfoService.queryUserByName(username);
         if(null == userInfo){
+            userBuilder.password(null);
+            userBuilder.authorities(Collections.emptyList());
             return userBuilder.build();
         }
 

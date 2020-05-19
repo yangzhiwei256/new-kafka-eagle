@@ -43,7 +43,6 @@ import org.smartloli.kafka.eagle.web.util.JMXFactoryUtils;
 import org.smartloli.kafka.eagle.web.util.KafkaResourcePoolUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import scala.Option;
 import scala.Tuple2;
@@ -90,41 +89,34 @@ public class KafkaServiceImpl implements KafkaService {
     @Autowired
     private KafkaClustersConfig kafkaClustersConfig;
 
-    /**
-     * Find topic and group exist in zookeeper.
-     *
-     * @param topic Filter topic.
-     * @param group Filter group
-     * @return Boolean.
-     */
     @Override
-    public boolean findTopicAndGroupExist(String clusterAlias, String topic, String group) {
+    public boolean findTopicExistInGroup(String clusterAlias, String topic, String consumerGroup) {
         KafkaZkClient zkc = KafkaResourcePoolUtils.getZookeeperClient(clusterAlias);
-        String ownersPath = CONSUMERS_PATH + "/" + group + "/owners/" + topic;
-        boolean status = zkc.pathExists(ownersPath);
-        KafkaResourcePoolUtils.release(clusterAlias, zkc);
-        return status;
+        try {
+            String ownersPath = CONSUMERS_PATH + "/" + consumerGroup + "/owners/" + topic;
+            return zkc.pathExists(ownersPath);
+        }finally {
+            KafkaResourcePoolUtils.release(clusterAlias, zkc);
+        }
     }
 
-	/**
-	 * Obtaining metadata in zookeeper by topic.
-	 * @param topic Selected condition.
-	 * @return List.
-	 */
     @Override
 	public List<String> findTopicPartition(String clusterAlias, String topic) {
         KafkaZkClient kafkaZkClient = KafkaResourcePoolUtils.getZookeeperClient(clusterAlias);
-        Seq<String> brokerTopicsPaths = kafkaZkClient.getChildren(BROKER_TOPICS_PATH + "/" + topic + "/partitions");
-        List<String> topicAndPartitions = JavaConversions.seqAsJavaList(brokerTopicsPaths);
-        KafkaResourcePoolUtils.release(clusterAlias, kafkaZkClient);
-        return topicAndPartitions;
+        try {
+            Seq<String> brokerTopicsPaths = kafkaZkClient.getChildren(BROKER_TOPICS_PATH + "/" + topic + "/partitions");
+            List<String> topicAndPartitions = JavaConversions.seqAsJavaList(brokerTopicsPaths);
+            log.info("kafka集群：[{}], 主题:[{}], topicAndPartitions ==> {}", clusterAlias, topic, topicAndPartitions);
+            return topicAndPartitions;
+        }finally {
+            KafkaResourcePoolUtils.release(clusterAlias, kafkaZkClient);
+        }
     }
 
-	/** Get kafka active consumer topic. */
     @Override
-	public Map<String, List<String>> getActiveTopic(String clusterAlias) {
-        KafkaZkClient zkc = KafkaResourcePoolUtils.getZookeeperClient(clusterAlias);
-        Map<String, List<String>> actvTopics = new HashMap<String, List<String>>();
+	public Map<String, List<String>> findActiveTopics(String clusterName) {
+        KafkaZkClient zkc = KafkaResourcePoolUtils.getZookeeperClient(clusterName);
+        Map<String, List<String>> activeTopics = new HashMap<>();
         try {
             Seq<String> subConsumerPaths = zkc.getChildren(CONSUMERS_PATH);
             List<String> groups = JavaConversions.seqAsJavaList(subConsumerPaths);
@@ -145,51 +137,47 @@ public class KafkaServiceImpl implements KafkaService {
 				JSONObject groupAndTopic = (JSONObject) object;
 				String group = groupAndTopic.getString("group");
 				String topic = groupAndTopic.getString("topic");
-				if (actvTopics.containsKey(group + "_" + topic)) {
-					actvTopics.get(group + "_" + topic).add(topic);
+				if (activeTopics.containsKey(group + "_" + topic)) {
+					activeTopics.get(group + "_" + topic).add(topic);
 				} else {
 					List<String> topics = new ArrayList<String>();
 					topics.add(topic);
-					actvTopics.put(group + "_" + topic, topics);
+					activeTopics.put(group + "_" + topic, topics);
 				}
 			}
 		} catch (Exception ex) {
-            log.error(ex.getMessage());
+            log.error("查询kafka集群:[{}]活跃主题出错", clusterName, ex);
         } finally {
-            KafkaResourcePoolUtils.release(clusterAlias, zkc);
+            KafkaResourcePoolUtils.release(clusterName, zkc);
         }
-		return actvTopics;
+        log.info("查询kafka集群:[{}]活跃主题 ==> {}", clusterName, activeTopics);
+		return activeTopics;
 	}
 
-	/** Get kafka active consumer topic. */
     @Override
-	public Set<String> getActiveTopic(String clusterAlias, String group) {
+	public Set<String> findActiveTopics(String clusterAlias, String consumerGroup) {
         KafkaZkClient zkc = KafkaResourcePoolUtils.getZookeeperClient(clusterAlias);
         Set<String> activeTopics = new HashSet<>();
         try {
-            Seq<String> topics = zkc.getChildren(CONSUMERS_PATH + "/" + group + OWNERS);
+            Seq<String> topics = zkc.getChildren(CONSUMERS_PATH + "/" + consumerGroup + OWNERS);
             for (String topic : JavaConversions.seqAsJavaList(topics)) {
                 activeTopics.add(topic);
             }
         } catch (Exception ex) {
-            log.error("Get kafka active topic has error, msg is " + ex.getMessage());
-            log.error(ex.getMessage());
+            log.error("Get kafka active topic has error", ex);
         } finally {
-            if (zkc != null) {
-                KafkaResourcePoolUtils.release(clusterAlias, zkc);
-                zkc = null;
-            }
+            KafkaResourcePoolUtils.release(clusterAlias, zkc);
         }
         return activeTopics;
     }
 
     @Override
     public List<KafkaBrokerInfo> getBrokerInfos(String clusterName) {
-        return getAllBrokerInfos(Collections.singletonList(clusterName)).get(clusterName);
+        return getBrokerInfos(Collections.singletonList(clusterName)).get(clusterName);
     }
 
     @Override
-    public Map<String, List<KafkaBrokerInfo>> getAllBrokerInfos(List<String> clusterNames) {
+    public Map<String, List<KafkaBrokerInfo>> getBrokerInfos(List<String> clusterNames) {
         if (StringUtils.isEmpty(clusterNames)) {
             return Collections.emptyMap();
         }
@@ -234,44 +222,17 @@ public class KafkaServiceImpl implements KafkaService {
         return clusterBrokerInfoMap;
     }
 
-	/** Obtaining kafka consumer information from zookeeper. */
     @Override
-	public Map<String, List<String>> getConsumers(String clusterAlias) {
-        KafkaZkClient kafkaZkClient = KafkaResourcePoolUtils.getZookeeperClient(clusterAlias);
-        Map<String, List<String>> consumers = new HashMap<String, List<String>>();
-        try {
-            Seq<String> subConsumerPaths = kafkaZkClient.getChildren(CONSUMERS_PATH);
-            List<String> groups = JavaConversions.seqAsJavaList(subConsumerPaths);
-            for (String group : groups) {
-                String path = CONSUMERS_PATH + "/" + group + "/owners";
-                if (kafkaZkClient.pathExists(path)) {
-                    Seq<String> owners = kafkaZkClient.getChildren(path);
-                    List<String> ownersSerialize = JavaConversions.seqAsJavaList(owners);
-                    consumers.put(group, ownersSerialize);
-				} else {
-                    log.error("Consumer Path[" + path + "] is not exist.");
-                }
-			}
-		} catch (Exception ex) {
-            log.error(ex.getMessage());
-        } finally {
-            KafkaResourcePoolUtils.release(clusterAlias, kafkaZkClient);
-        }
-		return consumers;
-	}
-
-	/** Obtaining kafka consumer page information from zookeeper. */
-    @Override
-	public Map<String, List<String>> getConsumers(String clusterAlias, DisplayInfo page) {
+	public Map<String, List<String>> getConsumers(String clusterAlias, DisplayInfo displayInfo) {
         KafkaZkClient zkc = KafkaResourcePoolUtils.getZookeeperClient(clusterAlias);
-        Map<String, List<String>> consumers = new HashMap<String, List<String>>();
+        Map<String, List<String>> consumers = new HashMap<>();
         try {
-            if (page.getSearch().length() > 0) {
-                String path = CONSUMERS_PATH + "/" + page.getSearch() + "/owners";
+            if (displayInfo.getSearch().length() > 0) {
+                String path = CONSUMERS_PATH + "/" + displayInfo.getSearch() + "/owners";
                 if (zkc.pathExists(path)) {
                     Seq<String> owners = zkc.getChildren(path);
                     List<String> ownersSerialize = JavaConversions.seqAsJavaList(owners);
-                    consumers.put(page.getSearch(), ownersSerialize);
+                    consumers.put(displayInfo.getSearch(), ownersSerialize);
                 } else {
                     log.error("Consumer Path[" + path + "] is not exist.");
 				}
@@ -280,7 +241,7 @@ public class KafkaServiceImpl implements KafkaService {
 				List<String> groups = JavaConversions.seqAsJavaList(subConsumersPaths);
 				int offset = 0;
 				for (String group : groups) {
-                    if (offset < (page.getDisplayLength() + page.getDisplayStart()) && offset >= page.getDisplayStart()) {
+                    if (offset < (displayInfo.getDisplayLength() + displayInfo.getDisplayStart()) && offset >= displayInfo.getDisplayStart()) {
                         String path = CONSUMERS_PATH + "/" + group + "/owners";
                         if (zkc.pathExists(path)) {
                             Seq<String> owners = zkc.getChildren(path);
@@ -293,31 +254,15 @@ public class KafkaServiceImpl implements KafkaService {
 					offset++;
 				}
 			}
-		} catch (Exception ex) {
-            log.error(ex.getMessage());
-        } finally {
-			if (zkc != null) {
-                KafkaResourcePoolUtils.release(clusterAlias, zkc);
-                zkc = null;
-            }
+		} finally {
+            KafkaResourcePoolUtils.release(clusterAlias, zkc);
 		}
+        log.info("kafka集群:[{}],分页:[{}] 消费者信息 ==> {}", clusterAlias, displayInfo, consumers);
 		return consumers;
 	}
 
-	/**
-	 * According to group, topic and partition to get offset from zookeeper.
-	 * 
-	 * @param topic
-	 *            Filter topic.
-	 * @param group
-	 *            Filter group.
-	 * @param partition
-	 *            Filter partition.
-	 * @return OffsetZkInfo.
-	 * @see OffsetZkInfo
-	 */
     @Override
-	public OffsetZkInfo getOffset(String clusterAlias, String topic, String group, int partition) {
+	public OffsetZkInfo getGroupTopicPartitionOffset(String clusterAlias, String topic, String group, int partition) {
         KafkaZkClient zkc = KafkaResourcePoolUtils.getZookeeperClient(clusterAlias);
         OffsetZkInfo offsetZk = new OffsetZkInfo();
         String offsetPath = CONSUMERS_PATH + "/" + group + "/offsets/" + topic + "/" + partition;
@@ -328,51 +273,41 @@ public class KafkaServiceImpl implements KafkaService {
                 tuple = zkc.getDataAndStat(offsetPath);
             } else {
                 log.info("Partition[" + partition + "],OffsetPath[" + offsetPath + "] is not exist!");
-                if (zkc != null) {
-                    KafkaResourcePoolUtils.release(clusterAlias, zkc);
-                    zkc = null;
-                }
 				return offsetZk;
 			}
+
+            String tupleString = new String(tuple._1.get());
+            long offsetSize = Long.parseLong(tupleString);
+            if (zkc.pathExists(ownersPath)) {
+                Tuple2<Option<byte[]>, Stat> tuple2 = zkc.getDataAndStat(ownersPath);
+                String tupleString2 = new String(tuple2._1.get());
+                offsetZk.setOwners(tupleString2 == null ? "" : tupleString2);
+            } else {
+                offsetZk.setOwners("");
+            }
+            offsetZk.setOffset(offsetSize);
+            offsetZk.setCreate(DateUtils.convertUnixTime2Date(tuple._2.getCtime()));
+            offsetZk.setModify(DateUtils.convertUnixTime2Date(tuple._2.getMtime()));
 		} catch (Exception ex) {
             log.error("Partition[" + partition + "],get offset has error", ex);
-            if (zkc != null) {
-                KafkaResourcePoolUtils.release(clusterAlias, zkc);
-                zkc = null;
-            }
-            return offsetZk;
-        }
-        String tupleString = new String(tuple._1.get());
-        long offsetSize = Long.parseLong(tupleString);
-        if (zkc.pathExists(ownersPath)) {
-            Tuple2<Option<byte[]>, Stat> tuple2 = zkc.getDataAndStat(ownersPath);
-            String tupleString2 = new String(tuple2._1.get());
-            offsetZk.setOwners(tupleString2 == null ? "" : tupleString2);
-        } else {
-            offsetZk.setOwners("");
-        }
-        offsetZk.setOffset(offsetSize);
-        offsetZk.setCreate(DateUtils.convertUnixTime2Date(tuple._2.getCtime()));
-        offsetZk.setModify(DateUtils.convertUnixTime2Date(tuple._2.getMtime()));
-        if (zkc != null) {
+        }finally {
             KafkaResourcePoolUtils.release(clusterAlias, zkc);
-            zkc = null;
         }
         return offsetZk;
     }
 
-	/** According to topic and partition to obtain Replicas & Isr. */
     @Override
-	public String getReplicasIsr(String clusterAlias, String topic, int partitionId) {
+	public String getTopicPartitionReplicas(String clusterAlias, String topic, int partitionId) {
         KafkaZkClient zkc = KafkaResourcePoolUtils.getZookeeperClient(clusterAlias);
-        TopicPartition tp = new TopicPartition(topic, partitionId);
-        Seq<Object> replis = zkc.getReplicasForPartition(tp);
-        List<Object> targets = JavaConversions.seqAsJavaList(replis);
-        if (zkc != null) {
+        try {
+            TopicPartition topicPartition = new TopicPartition(topic, partitionId);
+            Seq<Object> replicas = zkc.getReplicasForPartition(topicPartition);
+            String result = JSON.toJSONString(JavaConversions.seqAsJavaList(replicas));
+            log.info("kafka集群[{}],主题:[{}], 分区号:[{}], 复制分区信息 ==> {}", clusterAlias, topic, partitionId, result);
+            return result;
+        }finally {
             KafkaResourcePoolUtils.release(clusterAlias, zkc);
-            zkc = null;
         }
-        return targets.toString();
     }
 
 	/** Get zookeeper cluster information. */
@@ -395,70 +330,18 @@ public class KafkaServiceImpl implements KafkaService {
 	public JSONObject zkCliStatus(String clusterAlias) {
         JSONObject target = new JSONObject();
         KafkaZkClient zkc = KafkaResourcePoolUtils.getZookeeperClient(clusterAlias);
-        if (zkc != null) {
-            target.put("live", true);
-            target.put("list", kafkaClustersConfig.getClusterConfigByName(clusterAlias).getZkList());
-        } else {
-            target.put("live", false);
-            target.put("list", kafkaClustersConfig.getClusterConfigByName(clusterAlias).getZkList());
-        }
-        if (zkc != null) {
+        try{
+            if (zkc != null) {
+                target.put("live", true);
+                target.put("list", kafkaClustersConfig.getClusterConfigByName(clusterAlias).getZkList());
+            } else {
+                target.put("live", false);
+                target.put("list", kafkaClustersConfig.getClusterConfigByName(clusterAlias).getZkList());
+            }
+        }finally {
             KafkaResourcePoolUtils.release(clusterAlias, zkc);
-            zkc = null;
         }
 		return target;
-	}
-
-	/**
-	 * Create topic to kafka cluster, it is worth noting that the backup number
-	 * must be less than or equal to brokers data.
-	 * 
-	 * @param topicName
-	 *            Create topic name.
-	 * @param partitions
-	 *            Create topic partitions.
-	 * @param replic
-	 *            Replic numbers.
-	 * @return Map.
-	 */
-    @Override
-	public Map<String, Object> create(String clusterAlias, String topicName, String partitions, String replic) {
-        Map<String, Object> targets = new HashMap<String, Object>();
-        int brokers = getBrokerInfos(clusterAlias).size();
-        if (Integer.parseInt(replic) > brokers) {
-            targets.put("status", "error");
-            targets.put("info", "replication factor: " + replic + " larger than available brokers: " + brokers);
-            return targets;
-        }
-        AdminClient adminClient = KafkaResourcePoolUtils.getKafkaClient(clusterAlias);
-        try {
-            NewTopic newTopic = new NewTopic(topicName, Integer.valueOf(partitions), Short.valueOf(replic));
-            adminClient.createTopics(Collections.singleton(newTopic)).all().get();
-        } catch (Exception e) {
-            log.info("Create kafka topic has error", e);
-		} finally {
-            KafkaResourcePoolUtils.release(clusterAlias, adminClient);
-		}
-
-		targets.put("status", "success");
-		targets.put("info", "Create topic[" + topicName + "] has successed,partitions numbers is [" + partitions + "],replication-factor numbers is [" + replic + "]");
-		return targets;
-	}
-
-	/** Delete topic to kafka cluster. */
-	public Map<String, Object> delete(String clusterAlias, String topicName) {
-        Map<String, Object> targets = new HashMap<String, Object>();
-        AdminClient adminClient = KafkaResourcePoolUtils.getKafkaClient(clusterAlias);
-        try {
-            adminClient.deleteTopics(Collections.singleton(topicName)).all().get();
-            targets.put("status", "success");
-        } catch (Exception e) {
-            log.error("Delete kafka topic has error", e);
-            targets.put("status", "failed");
-		} finally {
-            KafkaResourcePoolUtils.release(clusterAlias, adminClient);
-		}
-		return targets;
 	}
 
 	/** Get kafka brokers from zookeeper. */
@@ -542,7 +425,7 @@ public class KafkaServiceImpl implements KafkaService {
 
 	/** Get kafka 0.10.x after activer topics. */
 	public Set<String> getKafkaActiverTopics(String clusterAlias, String group) {
-		JSONArray consumerGroups = getKafkaMetadata(parseBrokerServer(clusterAlias), group, clusterAlias);
+		JSONArray consumerGroups = getKafkaMetadata(clusterAlias, group);
 		Set<String> topics = new HashSet<>();
 		for (Object object : consumerGroups) {
 			JSONObject consumerGroup = (JSONObject) object;
@@ -557,7 +440,7 @@ public class KafkaServiceImpl implements KafkaService {
 	}
 
 	public Set<String> getKafkaConsumerTopics(String clusterAlias, String group) {
-		JSONArray consumerGroups = getKafkaMetadata(parseBrokerServer(clusterAlias), group, clusterAlias);
+		JSONArray consumerGroups = getKafkaMetadata(clusterAlias, group);
 		Set<String> topics = new HashSet<>();
 		for (Object object : consumerGroups) {
 			JSONObject consumerGroup = (JSONObject) object;
@@ -567,40 +450,6 @@ public class KafkaServiceImpl implements KafkaService {
 			}
 		}
 		return topics;
-	}
-
-	/** Get kafka 0.10.x, 1.x, 2.x consumer metadata. */
-	public String getKafkaConsumer(String clusterAlias) {
-        JSONArray consumerGroups = new JSONArray();
-        AdminClient adminClient = KafkaResourcePoolUtils.getKafkaClient(clusterAlias);
-        try {
-            ListConsumerGroupsResult cgrs = adminClient.listConsumerGroups();
-            Collection<ConsumerGroupListing> consumerGroupListings = cgrs.all().get();
-            if (!CollectionUtils.isEmpty(consumerGroupListings)) {
-                for (ConsumerGroupListing consumerGroupListing : consumerGroupListings) {
-					JSONObject consumerGroup = new JSONObject();
-					String groupId = consumerGroupListing.groupId();
-					DescribeConsumerGroupsResult descConsumerGroup = adminClient.describeConsumerGroups(Arrays.asList(groupId));
-					if (!groupId.contains("kafka.eagle")) {
-						consumerGroup.put("group", groupId);
-						try {
-							Node node = descConsumerGroup.all().get().get(groupId).coordinator();
-							consumerGroup.put("node", node.host() + ":" + node.port());
-						} catch (Exception e) {
-                            log.error("Get coordinator node has error, msg is " + e.getMessage());
-                            e.printStackTrace();
-                        }
-						consumerGroup.put("meta", getKafkaMetadata(parseBrokerServer(clusterAlias), groupId, clusterAlias));
-						consumerGroups.add(consumerGroup);
-					}
-				}
-			}
-		} catch (Exception e) {
-            log.error("Get kafka consumer has error", e);
-        } finally {
-            KafkaResourcePoolUtils.release(clusterAlias, adminClient);
-		}
-		return consumerGroups.toJSONString();
 	}
 
 	/** Get kafka 0.10.x consumer group & topic information used for page. */
@@ -629,7 +478,7 @@ public class KafkaServiceImpl implements KafkaService {
                                 log.error("Get coordinator node has error, msg is " + e.getMessage());
                                 e.printStackTrace();
                             }
-                            consumerGroup.put("meta", getKafkaMetadata(KafkaResourcePoolUtils.getBootstrapServer(clusterAlias), groupId, clusterAlias));
+                            consumerGroup.put("meta", getKafkaMetadata(clusterAlias, groupId));
                             consumerGroups.add(consumerGroup);
                         }
                         offset++;
@@ -657,7 +506,7 @@ public class KafkaServiceImpl implements KafkaService {
                                 log.error("Get coordinator node has error, msg is " + e.getMessage());
                                 e.printStackTrace();
                             }
-                            consumerGroup.put("meta", getKafkaMetadata(KafkaResourcePoolUtils.getBootstrapServer(clusterAlias), groupId, clusterAlias));
+                            consumerGroup.put("meta", getKafkaMetadata(clusterAlias, groupId));
                             consumerGroups.add(consumerGroup);
                         }
                         offset++;
@@ -677,12 +526,12 @@ public class KafkaServiceImpl implements KafkaService {
 	}
 
 	/** Get kafka 0.10.x consumer metadata. */
-	private JSONArray getKafkaMetadata(String bootstrapServers, String group, String clusterAlias) {
-        Properties prop = new Properties();
+	@Override
+	public JSONArray getKafkaMetadata(String clusterAlias, String group) {
         JSONArray consumerGroups = new JSONArray();
         AdminClient adminClient = KafkaResourcePoolUtils.getKafkaClient(clusterAlias);
         try {
-            DescribeConsumerGroupsResult descConsumerGroup = adminClient.describeConsumerGroups(Arrays.asList(group));
+            DescribeConsumerGroupsResult descConsumerGroup = adminClient.describeConsumerGroups(Collections.singletonList(group));
             Collection<MemberDescription> consumerMetaInfos = descConsumerGroup.describedGroups().get(group).get().members();
             Set<String> hasOwnerTopics = new HashSet<>();
 			if (consumerMetaInfos.size() > 0) {
@@ -728,7 +577,7 @@ public class KafkaServiceImpl implements KafkaService {
 
 	/** Get kafka 0.10.x consumer pages. */
 	public String getKafkaActiverSize(String clusterAlias, String group) {
-		JSONArray consumerGroups = getKafkaMetadata(parseBrokerServer(clusterAlias), group, clusterAlias);
+		JSONArray consumerGroups = getKafkaMetadata(clusterAlias, group);
 		int activerCounter = 0;
 		Set<String> topics = new HashSet<>();
 		for (Object object : consumerGroups) {
@@ -748,9 +597,9 @@ public class KafkaServiceImpl implements KafkaService {
 	}
 
 	/** Get kafka consumer information pages not owners. */
-	public OwnerInfo getKafkaActiverNotOwners(String clusterAlias, String group) {
+	public OwnerInfo getKafkaActiveNotOwners(String clusterAlias, String group) {
 		OwnerInfo ownerInfo = new OwnerInfo();
-		JSONArray consumerGroups = getKafkaMetadata(parseBrokerServer(clusterAlias), group, clusterAlias);
+		JSONArray consumerGroups = getKafkaMetadata(clusterAlias, group);
 		int activerCounter = 0;
 		Set<String> topics = new HashSet<>();
 		for (Object object : consumerGroups) {
@@ -770,7 +619,7 @@ public class KafkaServiceImpl implements KafkaService {
 
 	/** Get kafka 0.10.x, 1.x, 2.x consumer topic information. */
 	public Set<String> getKafkaConsumerTopic(String clusterAlias, String group) {
-		JSONArray consumerGroups = getKafkaMetadata(parseBrokerServer(clusterAlias), group, clusterAlias);
+		JSONArray consumerGroups = getKafkaMetadata(clusterAlias, group);
 		Set<String> topics = new HashSet<>();
 		for (Object object : consumerGroups) {
 			JSONObject consumerGroup = (JSONObject) object;
@@ -784,7 +633,7 @@ public class KafkaServiceImpl implements KafkaService {
 
 	/** Get kafka 0.10.x consumer group and topic. */
 	public String getKafkaConsumerGroupTopic(String clusterAlias, String group) {
-		return getKafkaMetadata(parseBrokerServer(clusterAlias), group, clusterAlias).toJSONString();
+		return getKafkaMetadata(clusterAlias, group).toJSONString();
 	}
 
 	/** Get kafka 0.10.x, 1.x, 2.x offset from topic. */
@@ -889,10 +738,10 @@ public class KafkaServiceImpl implements KafkaService {
     }
 
 	/** Get kafka 0.10.x topic real logsize by partitionid. */
-	public long getKafkaRealLogSize(String clusterAlias, String topic, int partitionid) {
+	public long getKafkaRealLogSize(String clusterAlias, String topic, int partitionId) {
         long realLogSize = 0L;
         KafkaConsumer<String, String> consumer = KafkaResourcePoolUtils.getKafkaConsumer(clusterAlias);
-        TopicPartition tp = new TopicPartition(topic, partitionid);
+        TopicPartition tp = new TopicPartition(topic, partitionId);
         consumer.assign(Collections.singleton(tp));
         java.util.Map<TopicPartition, Long> endLogSize = consumer.endOffsets(Collections.singleton(tp));
         java.util.Map<TopicPartition, Long> startLogSize = consumer.beginningOffsets(Collections.singleton(tp));
@@ -907,11 +756,11 @@ public class KafkaServiceImpl implements KafkaService {
 	}
 
 	/** Get kafka 0.10.x topic real logsize by partitionid set. */
-	public long getKafkaRealLogSize(String clusterAlias, String topic, Set<Integer> partitionids) {
+	public long getKafkaRealLogSize(String clusterAlias, String topic, Set<Integer> partitionIds) {
         long realLogSize = 0L;
         KafkaConsumer<String, String> consumer = KafkaResourcePoolUtils.getKafkaConsumer(clusterAlias);
         Set<TopicPartition> tps = new HashSet<>();
-        for (int partitionId : partitionids) {
+        for (int partitionId : partitionIds) {
             TopicPartition tp = new TopicPartition(topic, partitionId);
             tps.add(tp);
         }
@@ -990,35 +839,34 @@ public class KafkaServiceImpl implements KafkaService {
 		return version;
 	}
 
-	/** Get kafka 0.10.x sasl topic metadata. */
+	@Override
 	public List<MetadataInfo> findKafkaLeader(String clusterAlias, String topic) {
-        List<MetadataInfo> targets = new ArrayList<>();
+        List<MetadataInfo> metadataInfos = new ArrayList<>();
         KafkaZkClient zkc = KafkaResourcePoolUtils.getZookeeperClient(clusterAlias);
-        if (zkc.pathExists(BROKER_TOPICS_PATH + "/" + topic)) {
-            Tuple2<Option<byte[]>, Stat> tuple = zkc.getDataAndStat(BROKER_TOPICS_PATH + "/" + topic);
-            String tupleString = new String(tuple._1.get());
-            JSONObject partitionObject = JSON.parseObject(tupleString).getJSONObject("partitions");
-            for (String partition : partitionObject.keySet()) {
-                String path = String.format(TOPIC_ISR, topic, Integer.valueOf(partition));
-                Tuple2<Option<byte[]>, Stat> tuple2 = zkc.getDataAndStat(path);
-                String tupleString2 = new String(tuple2._1.get());
-                JSONObject topicMetadata = JSON.parseObject(tupleString2);
-                MetadataInfo metadate = new MetadataInfo();
-				try {
-					metadate.setLeader(topicMetadata.getInteger("leader"));
-				} catch (Exception e) {
-                    log.error("Parse string brokerid to int has error, brokerid[" + topicMetadata.getString("leader") + "]");
-                    e.printStackTrace();
+        try {
+            if (zkc.pathExists(BROKER_TOPICS_PATH + "/" + topic)) {
+                Tuple2<Option<byte[]>, Stat> tuple = zkc.getDataAndStat(BROKER_TOPICS_PATH + "/" + topic);
+                String tupleString = new String(tuple._1.get());
+                JSONObject partitionObject = JSON.parseObject(tupleString).getJSONObject("partitions");
+                for (String partition : partitionObject.keySet()) {
+                    String path = String.format(TOPIC_ISR, topic, Integer.valueOf(partition));
+                    Tuple2<Option<byte[]>, Stat> tuple2 = zkc.getDataAndStat(path);
+                    String tupleString2 = new String(tuple2._1.get());
+                    JSONObject topicMetadata = JSON.parseObject(tupleString2);
+                    MetadataInfo metadata = new MetadataInfo();
+                    try {
+                        metadata.setLeader(topicMetadata.getInteger("leader"));
+                    } catch (Exception e) {
+                        log.error("Parse string brokerid to int has error, brokerid[" + topicMetadata.getString("leader") + "]", e);
+                    }
+                    metadata.setPartitionId(Integer.parseInt(partition));
+                    metadataInfos.add(metadata);
                 }
-				metadate.setPartitionId(Integer.parseInt(partition));
-				targets.add(metadate);
-			}
-		}
-		if (zkc != null) {
+            }
+        }finally {
             KafkaResourcePoolUtils.release(clusterAlias, zkc);
-            zkc = null;
         }
-		return targets;
+		return metadataInfos;
 	}
 
 	/** Send mock message to kafka topic . */
@@ -1039,13 +887,12 @@ public class KafkaServiceImpl implements KafkaService {
 			List<String> partitions = findTopicPartition(clusterAlias, topic);
 			for (String partition : partitions) {
 				int partitionInt = Integer.parseInt(partition);
-				OffsetZkInfo offsetZk = getOffset(clusterAlias, topic, group, partitionInt);
+				OffsetZkInfo offsetZk = getGroupTopicPartitionOffset(clusterAlias, topic, group, partitionInt);
 				long logSize = getLogSize(clusterAlias, topic, partitionInt);
 				lag += logSize - offsetZk.getOffset();
 			}
 		} catch (Exception e) {
-            log.error("Get cluser[" + clusterAlias + "] active group[" + group + "] topic[" + topic + "] lag has error, msg is " + e.getMessage());
-            e.printStackTrace();
+            log.error("Get cluster[" + clusterAlias + "] active group[" + group + "] topic[" + topic + "] lag has error", e);
         }
 		return lag;
 	}
@@ -1117,32 +964,29 @@ public class KafkaServiceImpl implements KafkaService {
         List<KafkaBrokerInfo> brokers = getBrokerInfos(clusterAlias);
         for (KafkaBrokerInfo broker : brokers) {
             try {
-                JMXServiceURL jmxSeriverUrl = new JMXServiceURL(String.format(JMX, broker.getHost() + ":" + broker.getJmxPort()));
-                connector = JMXFactoryUtils.connectWithTimeout(jmxSeriverUrl, 30, TimeUnit.SECONDS);
+                JMXServiceURL jmxServerUrl = new JMXServiceURL(String.format(JMX, broker.getHost() + ":" + broker.getJmxPort()));
+                connector = JMXFactoryUtils.connectWithTimeout(jmxServerUrl, 30, TimeUnit.SECONDS);
                 if (connector != null) {
                     break;
                 }
             } catch (Exception e) {
-                log.error("Get kafka old version logsize has error, msg is " + e.getMessage());
-                e.printStackTrace();
+                log.error("Get kafka old version logsize has error", e);
             }
         }
         long logSize = 0L;
         try {
             MBeanServerConnection mbeanConnection = connector.getMBeanServerConnection();
-            for (int partitionid : partitionIds) {
-                logSize += Long.parseLong(mbeanConnection.getAttribute(new ObjectName(String.format(KafkaServer8.END_LOG_SIZE.getValue(), topic, partitionid)), KafkaServer8.VALUE.getValue()).toString());
+            for (int partitionId : partitionIds) {
+                logSize += Long.parseLong(mbeanConnection.getAttribute(new ObjectName(String.format(KafkaServer8.END_LOG_SIZE.getValue(), topic, partitionId)), KafkaServer8.VALUE.getValue()).toString());
 			}
 		} catch (Exception ex) {
-            log.error("Get kafka old version logsize & parse has error, msg is " + ex.getMessage());
-            ex.printStackTrace();
+            log.error("Get kafka old version logsize & parse has error", ex);
         } finally {
 			if (connector != null) {
 				try {
 					connector.close();
 				} catch (IOException e) {
-                    log.error("Close jmx connector has error, msg is " + e.getMessage());
-                    e.printStackTrace();
+                    log.error("Close jmx connector has error", e);
                 }
 			}
 		}
@@ -1189,31 +1033,31 @@ public class KafkaServiceImpl implements KafkaService {
 	}
 
 	/** Get broker host and jmx_port info from ids. */
+	@Override
 	public String getBrokerJMXFromIds(String clusterAlias, int ids) {
         String jni = "";
         KafkaZkClient zkc = KafkaResourcePoolUtils.getZookeeperClient(clusterAlias);
-        if (zkc.pathExists(BROKER_IDS_PATH)) {
-            try {
-                Tuple2<Option<byte[]>, Stat> tuple = zkc.getDataAndStat(BROKER_IDS_PATH + "/" + ids);
-                String tupleString = new String(tuple._1.get());
-                String host = "";
-                if (kafkaClustersConfig.getClusterConfigByName(clusterAlias).getSasl().getEnable()) {
-                    String endpoints = JSON.parseObject(tupleString).getString("endpoints");
-                    String tmp = endpoints.split("//")[1];
-                    host = tmp.substring(0, tmp.length() - 2).split(":")[0];
-                } else {
-                    host = JSON.parseObject(tupleString).getString("host");
+        try {
+            if (zkc.pathExists(BROKER_IDS_PATH)) {
+                try {
+                    Tuple2<Option<byte[]>, Stat> tuple = zkc.getDataAndStat(BROKER_IDS_PATH + "/" + ids);
+                    String tupleString = new String(tuple._1.get());
+                    String host = "";
+                    if (kafkaClustersConfig.getClusterConfigByName(clusterAlias).getSasl().getEnable()) {
+                        String endpoints = JSON.parseObject(tupleString).getString("endpoints");
+                        String tmp = endpoints.split("//")[1];
+                        host = tmp.substring(0, tmp.length() - 2).split(":")[0];
+                    } else {
+                        host = JSON.parseObject(tupleString).getString("host");
+                    }
+                    int jmxPort = JSON.parseObject(tupleString).getInteger("jmx_port");
+                    jni = host + ":" + jmxPort;
+                } catch (Exception ex) {
+                    log.error("Get broker from ids has error", ex);
                 }
-				int jmxPort = JSON.parseObject(tupleString).getInteger("jmx_port");
-				jni = host + ":" + jmxPort;
-			} catch (Exception ex) {
-                log.error("Get broker from ids has error, msg is " + ex.getCause().getMessage());
-                ex.printStackTrace();
             }
-		}
-		if (zkc != null) {
+        }finally {
             KafkaResourcePoolUtils.release(clusterAlias, zkc);
-            zkc = null;
         }
 		return jni;
 	}

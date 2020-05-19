@@ -45,7 +45,7 @@ public class DashboardController {
 	@Autowired
 	private DashboardService dashboradService;
 
-	@GetMapping(value = "/dash/kafka/ajax")
+	@GetMapping(value = "/dash/kafka")
     @ResponseBody
     @ApiOperation("获取面板数据")
 	public String dashboardAjax(HttpSession httpSession) {
@@ -58,7 +58,7 @@ public class DashboardController {
      * @param tkey 数据维度：logsize/capacity
      * @param request 请求体
      */
-	@GetMapping(value = "/dash/{tkey}/table/ajax")
+	@GetMapping(value = "/dash/{tkey}/table")
     @ResponseBody
     @ApiOperation("获取主题数据量和容量")
 	public String dashTopicRankAjax(@PathVariable("tkey") String tkey, HttpServletRequest request) {
@@ -74,7 +74,7 @@ public class DashboardController {
      * 获取系统内存数据
      * @param request
      */
-	@GetMapping(value = "/dash/os/mem/ajax")
+	@GetMapping(value = "/dash/os/mem")
     @ResponseBody
     @ApiOperation("获取系统内存数据")
 	public String dashOSMemAjax(HttpServletRequest request) {

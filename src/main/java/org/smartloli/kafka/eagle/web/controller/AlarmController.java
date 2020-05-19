@@ -134,7 +134,7 @@ public class AlarmController {
     /**
      * Get alarmer consumer group by ajax.
      */
-    @GetMapping("/alarm/consumer/group/ajax")
+    @GetMapping("/alarm/consumer/group")
     @ApiOperation("获取消费组信息")
     @ResponseBody
     public String alarmConsumerGroupAjax(HttpServletRequest request) {
@@ -148,7 +148,7 @@ public class AlarmController {
     }
 
 	/** Get alarmer consumer group by ajax. */
-	@RequestMapping(value = "/alarm/consumer/{group}/topic/ajax", method = RequestMethod.GET)
+	@RequestMapping(value = "/alarm/consumer/{group}/topic", method = RequestMethod.GET)
     @ResponseBody
 	public String alarmConsumerTopicAjax(@PathVariable("group") String group, HttpServletRequest request) {
 
@@ -202,7 +202,7 @@ public class AlarmController {
 	}
 
 	/** Get alarmer datasets by ajax. */
-	@RequestMapping(value = "/alarm/list/table/ajax", method = RequestMethod.GET)
+	@RequestMapping(value = "/alarm/list/table", method = RequestMethod.GET)
     @ResponseBody
 	public String alarmConsumerListAjax(HttpServletRequest request) {
 		String aoData = request.getParameter("aoData");
@@ -281,7 +281,7 @@ public class AlarmController {
 	}
 
 	/** Switch cluster alert info. */
-	@RequestMapping(value = "/alarm/list/modify/switch/{id}/ajax", method = RequestMethod.GET)
+	@RequestMapping(value = "/alarm/list/modify/switch/{id}", method = RequestMethod.GET)
     @ResponseBody
 	public String modifyConsumerAlertSwitchByIdAjax(@PathVariable("id") int id) {
         AlarmConsumerInfo alarmConsumer = alertService.findAlarmConsumerAlertById(id);
@@ -307,7 +307,7 @@ public class AlarmController {
 	 * Get alarm consumer detail, such consumer group(cgroup) or topic, and
 	 * alarm group(agroup).
 	 */
-	@RequestMapping(value = "/alarm/consumer/detail/{type}/{id}/ajax", method = RequestMethod.GET)
+	@RequestMapping(value = "/alarm/consumer/detail/{type}/{id}", method = RequestMethod.GET)
     @ResponseBody
 	public String getAlarmConsumerDetailByIdAjax(@PathVariable("id") int id, @PathVariable("type") String type) {
         JSONObject object = new JSONObject();
@@ -333,7 +333,7 @@ public class AlarmController {
 	}
 
 	/** Get alert info. */
-	@RequestMapping(value = "/alarm/consumer/modify/{id}/ajax", method = RequestMethod.GET)
+	@RequestMapping(value = "/alarm/consumer/modify/{id}", method = RequestMethod.GET)
     @ResponseBody
 	public String findAlarmConsumerByIdAjax(@PathVariable("id") int id) {
 	    return alertService.findAlarmConsumerAlertById(id).toString();
@@ -415,7 +415,7 @@ public class AlarmController {
 	}
 
 	/** Get alarmer cluster history datasets by ajax. */
-	@RequestMapping(value = "/alarm/history/table/ajax", method = RequestMethod.GET)
+	@RequestMapping(value = "/alarm/history/table", method = RequestMethod.GET)
     @ResponseBody
 	public String alarmClusterHistoryAjax(HttpServletRequest request) {
 		String aoData = request.getParameter("aoData");
@@ -492,7 +492,7 @@ public class AlarmController {
 	}
 
 	/** Get alarm cluster detail, such server or alarm group. */
-	@RequestMapping(value = "/alarm/cluster/detail/{type}/{id}/ajax", method = RequestMethod.GET)
+	@RequestMapping(value = "/alarm/cluster/detail/{type}/{id}", method = RequestMethod.GET)
     @ResponseBody
 	public String getAlarmClusterDetailByIdAjax(@PathVariable("id") int id, @PathVariable("type") String type) {
         JSONObject object = new JSONObject();
@@ -516,14 +516,14 @@ public class AlarmController {
 	}
 
 	/** Get alert info. */
-	@RequestMapping(value = "/alarm/history/modify/{id}/ajax", method = RequestMethod.GET)
+	@RequestMapping(value = "/alarm/history/modify/{id}", method = RequestMethod.GET)
     @ResponseBody
 	public String findClusterAlertByIdAjax(@PathVariable("id") int id) {
 		return alertService.findAlarmClusterAlertById(id).toString();
 	}
 
 	/** Switch cluster alert info. */
-	@RequestMapping(value = "/alarm/history/modify/switch/{id}/ajax", method = RequestMethod.GET)
+	@RequestMapping(value = "/alarm/history/modify/switch/{id}", method = RequestMethod.GET)
     @ResponseBody
 	public String modifyClusterAlertSwitchByIdAjax(@PathVariable("id") int id) {
         AlarmClusterInfo alarmCluster = alertService.findAlarmClusterAlertById(id);
@@ -569,7 +569,7 @@ public class AlarmController {
     }
 
 	/** Get alarm type list, such as email, dingding, wechat and so on. */
-	@RequestMapping(value = "/alarm/type/list/ajax", method = RequestMethod.GET)
+	@RequestMapping(value = "/alarm/type/list", method = RequestMethod.GET)
     @ResponseBody
 	public String alarmTypeListAjax() {
         JSONObject object = new JSONObject();
@@ -578,7 +578,7 @@ public class AlarmController {
 	}
 
 	/** Get alarm cluster type list, such as kafka, zookeeper and so on. */
-	@RequestMapping(value = "/alarm/cluster/{type}/list/ajax", method = RequestMethod.GET)
+	@RequestMapping(value = "/alarm/cluster/{type}/list", method = RequestMethod.GET)
     @ResponseBody
 	public String alarmClusterTypeListAjax(@PathVariable("type") String type, HttpServletRequest request) {
 			JSONObject object = new JSONObject();
@@ -601,7 +601,7 @@ public class AlarmController {
 	}
 
 	/** Check alarm group name. */
-	@RequestMapping(value = "/alarm/check/{group}/ajax", method = RequestMethod.GET)
+	@RequestMapping(value = "/alarm/check/{group}", method = RequestMethod.GET)
     @ResponseBody
 	public String alarmGroupCheckAjax(@PathVariable("group") String group, HttpServletRequest request) {
         HttpSession session = request.getSession();
@@ -661,7 +661,7 @@ public class AlarmController {
 	}
 
 	/** Get alarm config list. */
-	@RequestMapping(value = "/alarm/config/table/ajax", method = RequestMethod.GET)
+	@RequestMapping(value = "/alarm/config/table", method = RequestMethod.GET)
     @ResponseBody
 	public String getAlarmConfigTableAjax(HttpServletRequest request) {
 		String aoData = request.getParameter("aoData");
@@ -739,7 +739,7 @@ public class AlarmController {
 	}
 
 	/** Get alarm config by group name. */
-	@RequestMapping(value = "/alarm/config/get/{type}/{group}/ajax", method = RequestMethod.GET)
+	@RequestMapping(value = "/alarm/config/get/{type}/{group}", method = RequestMethod.GET)
     @ResponseBody
 	public String getAlarmConfigDetailByGroupAjax(@PathVariable("type") String type, @PathVariable("group") String group, HttpServletRequest request) {
 			HttpSession session = request.getSession();
@@ -788,7 +788,7 @@ public class AlarmController {
     }
 
 	/** Send test message by alarm config . */
-	@RequestMapping(value = "/alarm/config/test/send/ajax", method = RequestMethod.GET)
+	@RequestMapping(value = "/alarm/config/test/send", method = RequestMethod.GET)
     @ResponseBody
 	public String sendTestMsgAlarmConfig(HttpServletRequest request) {
 			String type = request.getParameter("type");

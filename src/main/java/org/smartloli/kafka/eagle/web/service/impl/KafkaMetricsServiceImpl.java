@@ -118,7 +118,7 @@ public class KafkaMetricsServiceImpl implements KafkaMetricsService {
 		return StrUtils.stringifyByObject(sum);
 	}
 
-	/** Get topic size from kafka jmx. */
+	@Override
 	public JSONObject topicSize(String clusterAlias, String topic) {
 		String jmx = "";
 		JMXConnector connector = null;
@@ -135,14 +135,13 @@ public class KafkaMetricsServiceImpl implements KafkaMetricsService {
 				Object size = mbeanConnection.getAttribute(new ObjectName(objectName), KafkaLog.VALUE.getValue());
 				tpSize += Long.parseLong(size.toString());
             } catch (Exception ex) {
-                log.error("Get topic size from jmx has error, msg is " + ex.getMessage());
-                ex.printStackTrace();
+                log.error("Get topic size from jmx has error", ex);
 			} finally {
 				if (connector != null) {
 					try {
 						connector.close();
                     } catch (IOException e) {
-                        log.error("Close jmx connector has error, msg is " + e.getMessage());
+                        log.error("Close jmx connector has error", e);
 					}
 				}
 			}

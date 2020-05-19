@@ -9,7 +9,7 @@ $(document).ready(function() {
 			$.ajax({
 				type : 'get',
 				dataType : 'json',
-				url : '/cluster/zk/cmd/ajax?cmd=' + command + '&type=ls',
+				url : '/cluster/zk/cmd?cmd=' + command + '&type=ls',
 				success : function(datas) {
 					if (datas != null) {
 						term.echo(String(datas.result));
@@ -20,7 +20,7 @@ $(document).ready(function() {
 			$.ajax({
 				type : 'get',
 				dataType : 'json',
-				url : '/cluster/zk/cmd/ajax?cmd=' + command + '&type=get',
+				url : '/cluster/zk/cmd?cmd=' + command + '&type=get',
 				success : function(datas) {
 					if (datas != null) {
 						term.echo(String(datas.result));
@@ -35,7 +35,7 @@ $(document).ready(function() {
 	$.ajax({
 		type : 'get',
 		dataType : 'json',
-		url : '/cluster/zk/islive/ajax',
+		url : '/cluster/zk/islive',
 		success : function(datas) {
 			if (datas != null) {
 				if (datas.live) {

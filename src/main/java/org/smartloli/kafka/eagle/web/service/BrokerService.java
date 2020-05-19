@@ -63,10 +63,20 @@ public interface BrokerService {
 	/** Get topic producer logsize total. */
     long getTopicLogSizeTotal(String clusterAlias, String topic);
 
-	/** Get topic real logsize records. */
+    /**
+     * 获取真实Kafka主题日志数据量
+     * @param clusterAlias kafka集群名称
+     * @param topic 主题名称
+     * @return
+     */
     long getTopicRealLogSize(String clusterAlias, String topic);
 
-	/** Get topic producer send logsize records. */
+    /**
+     * 获取kafka集群生产者发送主题日志数量
+     * @param clusterAlias kafka集群名称
+     * @param topic 主题名称
+     * @return
+     */
     long getTopicProducerLogSize(String clusterAlias, String topic);
 
 	/** Add topic partitions. */

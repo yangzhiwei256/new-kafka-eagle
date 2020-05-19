@@ -24,8 +24,9 @@ public class DefineAuthenticationFailureHandler implements AuthenticationFailure
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
         log.error("用户登陆认证失败", exception);
-        HttpSession httpSession = request.getSession();
-        httpSession.setAttribute(KafkaConstants.ERROR_LOGIN, "<div class='alert alert-danger'>Account or password is error .</div>");
+        HttpSession httpSession = request.getSession(false);
+        httpSession.setAttribute(KafkaConstants.ERROR_DISPLAY, true);
+        httpSession.setAttribute(KafkaConstants.ERROR_LOGIN, "Account or password is error .");
         response.sendRedirect(HttpConstants.LOGIN_URL);
     }
 }

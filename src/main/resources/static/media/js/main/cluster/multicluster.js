@@ -6,7 +6,7 @@ $(document).ready(function() {
 		"bProcessing" : true,
 		"bServerSide" : true,
 		"fnServerData" : retrieveData,
-		"sAjaxSource" : "/cluster/info/multicluster/ajax",
+		"sAjaxSource" : "/cluster/info/multicluster",
 		"aoColumns" : [ {
 			"mData" : 'id'
 		}, {

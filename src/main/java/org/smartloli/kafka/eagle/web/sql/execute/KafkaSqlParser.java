@@ -91,8 +91,7 @@ public class KafkaSqlParser {
 		} catch (Exception e) {
 			status.put("error", true);
 			status.put("msg", e.getMessage());
-			e.printStackTrace();
-			LOG.error("Execute sql to query kafka topic has error,msg is " + e.getMessage());
+			LOG.error("Execute sql to query kafka topic has error", e);
 		}
 		return status.toJSONString();
 	}

@@ -23,10 +23,7 @@ import org.smartloli.kafka.eagle.web.service.MetricsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -49,31 +46,25 @@ public class MetricsController {
 	private MetricsService metricsService;
 
 	/** Brokers viewer. */
-	@RequestMapping(value = "/metrics/brokers", method = RequestMethod.GET)
-	public ModelAndView clusterView() {
-		ModelAndView mav = new ModelAndView();
-		mav.setViewName("/metrics/brokers");
-		return mav;
+	@GetMapping("/metrics/brokers")
+	public String clusterView() {
+        return "/metrics/brokers";
 	}
 
 	/** Trend viewer. */
-	@RequestMapping(value = "/metrics/kafka", method = RequestMethod.GET)
-	public ModelAndView trendView() {
-		ModelAndView mav = new ModelAndView();
-		mav.setViewName("/metrics/kafka");
-		return mav;
+	@GetMapping("/metrics/kafka")
+	public String trendView() {
+        return "/metrics/kafka";
 	}
 
 	/** Trend viewer. */
-	@RequestMapping(value = "/metrics/zk", method = RequestMethod.GET)
-	public ModelAndView zkView() {
-		ModelAndView mav = new ModelAndView();
-		mav.setViewName("/metrics/zk");
-		return mav;
+	@GetMapping("/metrics/zk")
+	public String zkView() {
+		return "/metrics/zk";
 	}
 
 	/** Get cluster data by ajax. */
-	@GetMapping("/metrics/brokers/mbean/ajax")
+	@GetMapping("/metrics/brokers/mbean")
     @ResponseBody
 	public String clusterAjax(HttpSession session) {
         String clusterAlias = session.getAttribute(KafkaConstants.CLUSTER_ALIAS).toString();
@@ -81,7 +72,7 @@ public class MetricsController {
 	}
 
 	/** Get trend data by ajax. */
-	@GetMapping("/metrics/trend/mbean/ajax")
+	@GetMapping("/metrics/trend/mbean")
     @ResponseBody
 	public String trendAjax(HttpServletRequest request, HttpSession session) throws ParseException {
 			String clusterAlias = session.getAttribute(KafkaConstants.CLUSTER_ALIAS).toString();

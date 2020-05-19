@@ -35,6 +35,24 @@ import java.util.Map;
 public interface TopicService {
 
     /**
+     * 创建主题
+     * @param clusterAlias kafka集群名称
+     * @param topicName 主题名称
+     * @param partitions 分区数
+     * @param replica 复制分区数
+     * @return
+     */
+    Map<String, Object> createTopic(String clusterAlias, String topicName, String partitions, String replica);
+
+    /**
+     * 删除主题
+     * @param clusterAlias kafka集群名称
+     * @param topicName 主题名称
+     * @return
+     */
+    Map<String, String> deleteTopic(String clusterAlias, String topicName);
+
+    /**
      * Find topic name in all topics.
      */
     boolean hasTopic(String clusterAlias, String topicName);

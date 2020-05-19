@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="/public/css :: common_css(~{::title},~{::link})">
+    <title>Offsets - KafkaEagle</title>
+    <link th:href="@{/media/css/public/dataTables.bootstrap.min.css}" rel="stylesheet"/>
+</head>
+<body>
+<nav th:replace="/public/navbar :: common_navbar"></nav>
+<div id="wrapper">
+    <div id="page-wrapper">
+        <div class="row">
+            <div class="col-lg-12">
+                <h1 class="page-header">
+                    Consumers Offsets <small>details</small>
+                </h1>
+				</div>
+				<!-- /.col-lg-12 -->
+			</div>
+			<!-- /.row -->
+			<div class="row">
+				<div class="col-lg-12">
+					<div class="alert alert-info alert-dismissable">
+						<button type="button" class="close" data-dismiss="alert"
+							aria-hidden="true">×</button>
+						<i class="fa fa-info-circle"></i> <strong>List the
+							current consumers's offsets of topic.</strong>
+					</div>
+				</div>
+			</div>
+			<!-- /.row -->
+			<div class="row">
+				<div class="col-lg-12">
+					<div class="panel panel-default">
+						<div id="topic_name_header" class="panel-heading">
+							<i class="fa fa-user fa-fw"></i> <strong>{TopicName}</strong>
+							<div class="pull-right"></div>
+						</div>
+						<!-- /.panel-heading -->
+						<div id="offset_topic_info" class="panel-body"></div>
+						<!-- /.panel-body -->
+					</div>
+				</div>
+				<!-- /.col-lg-4 -->
+			</div>
+		</div>
+		<!-- /#page-wrapper -->
+	</div>
+<div th:replace="/public/script :: common_js(~{::script})">
+    <script th:src="@{/media/js/main/consumer/offset.consumer.js}" type="text/javascript"></script>
+    <script th:src="@{/media/js/plugins/datatables/jquery.dataTables.min.js}"></script>
+    <script th:src="@{/media/js/plugins/datatables/dataTables.bootstrap.min.js}"></script>
+</div>
+</body>
+</html>

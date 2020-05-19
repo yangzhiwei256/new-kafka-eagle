@@ -20,10 +20,8 @@ package org.smartloli.kafka.eagle.web.protocol;
 import lombok.Data;
 
 /**
- * Definition dashboard information.
- *
+ * 面板信息
  * @author smartloli.
- * <p>
  * Created by Aug 13, 2016
  */
 @Data

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="/public/css :: common_css(~{::title},~{})">
+    <title>Success - KafkaEagle</title>
+</head>
+<body>
+<nav th:replace="/public/navbar :: common_navbar"></nav>
+	<div id="wrapper">
+		<div id="page-wrapper">
+			<div class="row">
+				<div class="col-lg-12">
+					<h1 class="page-header">
+						Topic <small>create</small>
+					</h1>
+				</div>
+				<!-- /.col-lg-12 -->
+			</div>
+			<!-- /.row -->
+			<div class="row">
+				<div class="col-lg-12">
+					<div class="alert alert-success alert-dismissable">
+						<button type="button" class="close" data-dismiss="alert"
+							aria-hidden="true">×</button>
+						<i class="fa fa-info-circle"></i> <strong>${Submit_Status}</strong>
+						<a class="btn btn-large btn-primary" href="/topic/list">
+							<span class="ui-button-text">View Details</span>
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+<div th:replace="/public/script :: common_js(~{::script})">
+    <script th:src="@{/media/js/main/add.success.js}" type="text/javascript"></script>
+</div>
+</body>
+</html>

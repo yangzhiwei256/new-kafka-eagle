@@ -29,7 +29,7 @@ $(document).ready(function() {
 			"bProcessing" : true,
 			"bServerSide" : true,
 			"fnServerData" : retrieveData,
-			"sAjaxSource" : "/consumer/offset/group/topic/ajax",
+			"sAjaxSource" : "/consumer/offset/group/topic",
 			"aoColumns" : [ {
 				"mData" : 'partition'
 			}, {

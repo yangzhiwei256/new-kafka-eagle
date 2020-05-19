@@ -432,7 +432,7 @@ public class BrokerServiceImpl implements BrokerService {
                             metadate.setIsr(topicMetadata.getString("isr"));
                             metadate.setLeader(topicMetadata.getInteger("leader"));
                             metadate.setPartitionId(partition);
-                            metadate.setReplicas(kafkaService.getReplicasIsr(clusterAlias, topic, partition));
+                            metadate.setReplicas(kafkaService.getTopicPartitionReplicas(clusterAlias, topic, partition));
                             long logSize = 0L;
                             if ("kafka".equals(kafkaClustersConfig.getClusterConfigByName(clusterAlias).getOffsetStorage())) {
                                 logSize = kafkaService.getKafkaRealLogSize(clusterAlias, topic, partition);
@@ -493,7 +493,7 @@ public class BrokerServiceImpl implements BrokerService {
 						metadate.setIsr(topicMetadata.getString("isr"));
 						metadate.setLeader(topicMetadata.getInteger("leader"));
 						metadate.setPartitionId(Integer.valueOf(partition));
-						metadate.setReplicas(kafkaService.getReplicasIsr(clusterAlias, topic, Integer.valueOf(partition)));
+						metadate.setReplicas(kafkaService.getTopicPartitionReplicas(clusterAlias, topic, Integer.valueOf(partition)));
 						targets.add(metadate);
 					}
 				}
@@ -547,7 +547,6 @@ public class BrokerServiceImpl implements BrokerService {
 		return logSize;
 	}
 
-	/** Get topic real logsize records. */
 	@Override
 	public long getTopicRealLogSize(String clusterAlias, String topic) {
         long logSize = 0L;
@@ -589,10 +588,10 @@ public class BrokerServiceImpl implements BrokerService {
         if (KafkaConstants.CONSUMER_OFFSET_TOPIC.equals(topic)) {
             return logSize;
         }
-        KafkaZkClient zkc = KafkaResourcePoolUtils.getZookeeperClient(clusterAlias);
+        KafkaZkClient zookeeperClient = KafkaResourcePoolUtils.getZookeeperClient(clusterAlias);
         try {
-            if (zkc.pathExists(BROKER_TOPICS_PATH + "/" + topic)) {
-                Tuple2<Option<byte[]>, Stat> tuple = zkc.getDataAndStat(BROKER_TOPICS_PATH + "/" + topic);
+            if (zookeeperClient.pathExists(BROKER_TOPICS_PATH + "/" + topic)) {
+                Tuple2<Option<byte[]>, Stat> tuple = zookeeperClient.getDataAndStat(BROKER_TOPICS_PATH + "/" + topic);
                 String tupleString = new String(tuple._1.get());
                 JSONObject partitionObject = JSON.parseObject(tupleString).getJSONObject("partitions");
                 Set<Integer> partitions = new HashSet<>();
@@ -611,12 +610,9 @@ public class BrokerServiceImpl implements BrokerService {
                 }
 			}
         } catch (Exception e) {
-            log.error("Get topic real logsize has error, msg is " + e.getCause().getMessage());
-            e.printStackTrace();
-		}
-		if (zkc != null) {
-            KafkaResourcePoolUtils.release(clusterAlias, zkc);
-            zkc = null;
+            log.error("Get topic real logsize has error", e);
+		}finally {
+            KafkaResourcePoolUtils.release(clusterAlias, zookeeperClient);
         }
 		return logSize;
 	}

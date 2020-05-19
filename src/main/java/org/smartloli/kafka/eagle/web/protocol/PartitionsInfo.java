@@ -44,13 +44,27 @@ public class PartitionsInfo{
 
     /** 分区数量 **/
     private int partitionNumbers = 0;
+
+    /** Broker倾斜数 **/
     private long brokersSkewed;
+
+    /** Broker 使用率 **/
     private long brokersSpread;
+
+    /**
+     * 主分区是否倾斜
+     */
     private long brokersLeaderSkewed;
 
+    /**
+     * 创建时间
+     */
     @JSONField(format = DateUtils.DATA_FORMAT_YEAR_MON_DAY_HOUR_MIN_SEC)
     private Date created;
 
+    /**
+     * 更新时间
+     */
     @JSONField(format = DateUtils.DATA_FORMAT_YEAR_MON_DAY_HOUR_MIN_SEC)
     private Date modify;
 }

@@ -36,7 +36,9 @@ import java.util.Map;
 public interface MetricsService {
 
     /**
-     * Gets summary monitoring data for all broker.
+     * 获取Kafka集群所有代理节点监控数据
+     * @param clusterAlias kafka集群名称
+     * @return
      */
     String getAllBrokersMBean(String clusterAlias);
 

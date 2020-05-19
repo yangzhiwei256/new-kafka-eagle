@@ -149,7 +149,7 @@ $(document).ready(function() {
 			"bProcessing" : true,
 			"bServerSide" : true,
 			"fnServerData" : retrieveData,
-			"sAjaxSource" : '/topic/sql/history/ajax',
+			"sAjaxSource" : '/topic/sql/history',
 			"aoColumns" : ksqlMData
 		});
 

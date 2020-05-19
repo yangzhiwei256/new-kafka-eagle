@@ -1,0 +1,11 @@
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="common_js(script)">
+    <script th:src="@{/media/js/public/jquery.js}"></script>
+    <script th:src="@{/media/js/public/bootstrap.min.js}"></script>
+    <script th:src="@{/media/js/public/navbar.js}"></script>
+    <script th:src="@{/media/js/public/bootstrap-treeview.min.js}"></script>
+
+    <!-- 自定义脚本替换占位符 -->
+    <th:block th:replace="${script}"/>
+</div>
+</html>

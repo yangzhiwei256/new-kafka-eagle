@@ -18,6 +18,10 @@
 package org.smartloli.kafka.eagle.web.service;
 
 import org.smartloli.kafka.eagle.web.protocol.DisplayInfo;
+import org.smartloli.kafka.eagle.web.protocol.TopicConsumerInfo;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Kafka consumer data interface.
@@ -29,6 +33,15 @@ import org.smartloli.kafka.eagle.web.protocol.DisplayInfo;
  *         Update by hexiang 20170216
  */
 public interface ConsumerService {
+
+    /**
+     * 获取消费者信息
+     * @param clusterAlias kafka集群名称
+     */
+    Map<String, List<String>> getConsumers(String clusterAlias);
+
+    /** Get kafka 0.10.x consumer group & topic information. */
+    String getKafkaConsumer(String clusterAlias);
 
     /**
      * Get active topic graph data interface.
@@ -44,7 +57,7 @@ public interface ConsumerService {
      * Judge consumer detail information storage offset in kafka or zookeeper
      * interface.
      */
-    String getConsumerDetail(String clusterAlias, String formatter, String group);
+    List<TopicConsumerInfo> getConsumerDetail(String clusterAlias, String formatter, String group);
 
     /**
      * Judge consumers storage offset in kafka or zookeeper interface.
@@ -71,7 +84,6 @@ public interface ConsumerService {
      */
     int isConsumering(String clusterAlias, String group, String topic);
 
-    /** DB storage */
     /** Get consumer group count by db. */
     long getConsumerCountByDB(String clusterAlias);
 

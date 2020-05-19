@@ -59,7 +59,7 @@ public class TopicRankJob {
     @Autowired
     private KafkaClustersConfig kafkaClustersConfig;
 
-    @Scheduled(cron = "0 0/5 * * * ?")
+    @Scheduled(cron = "0 */10 * * * ?")
     protected void execute() {
         topicLogSizeStats();
         topicCapacityStats();

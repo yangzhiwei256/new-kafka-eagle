@@ -71,7 +71,7 @@ public class ClusterController {
 	}
 
 	/** Get cluster data by ajax. */
-	@GetMapping("/cluster/info/{type}/ajax")
+	@GetMapping("/cluster/info/{type}")
     @ResponseBody
     @ApiOperation("获取集群数据")
 	public String clusterAjax(@PathVariable("type") String type, HttpServletRequest request) {
@@ -198,7 +198,7 @@ public class ClusterController {
         }
 	}
 
-	@GetMapping("/cluster/info/multicluster/ajax")
+	@GetMapping("/cluster/info/multicluster")
     @ResponseBody
     @ApiOperation("获取多集群信息")
 	public String multiClusterAjax(HttpServletRequest request) {
@@ -252,7 +252,7 @@ public class ClusterController {
 		return target.toJSONString();
 	}
 
-	@GetMapping("/cluster/zk/islive/ajax")
+	@GetMapping("/cluster/zk/islive")
     @ResponseBody
     @ApiOperation("获取集群Zookeeper信息")
 	public String zkCliLiveAjax(HttpServletRequest request) {
@@ -261,7 +261,7 @@ public class ClusterController {
 		return clusterService.status(clusterAlias).toJSONString();
 	}
 
-	@GetMapping("/cluster/zk/cmd/ajax")
+	@GetMapping("/cluster/zk/cmd")
     @ResponseBody
     @ApiOperation("指定Zookeeper命令")
 	public String zkCliCmdAjax(HttpServletRequest request) {

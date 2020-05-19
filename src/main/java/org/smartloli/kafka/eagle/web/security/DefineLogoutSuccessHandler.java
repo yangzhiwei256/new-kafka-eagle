@@ -7,7 +7,6 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -23,8 +22,10 @@ import java.io.IOException;
 @Slf4j
 public class DefineLogoutSuccessHandler implements LogoutSuccessHandler {
     @Override
-    public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        log.info("用户【{}】退出登陆成功", ((User)authentication.getPrincipal()).getUsername());
+    public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+        if(null != authentication.getPrincipal()) {
+            log.info("用户【{}】退出登陆成功", ((User) authentication.getPrincipal()).getUsername());
+        }
         request.getSession().invalidate();
         response.sendRedirect(HttpConstants.LOGIN_URL);
     }

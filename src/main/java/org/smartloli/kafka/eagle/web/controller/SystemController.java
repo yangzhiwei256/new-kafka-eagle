@@ -22,6 +22,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.smartloli.kafka.eagle.web.constant.KafkaConstants;
 import org.smartloli.kafka.eagle.web.pojo.RoleAuthorityInfo;
 import org.smartloli.kafka.eagle.web.pojo.UserInfo;
@@ -29,6 +30,7 @@ import org.smartloli.kafka.eagle.web.pojo.UserRoleInfo;
 import org.smartloli.kafka.eagle.web.service.RoleService;
 import org.smartloli.kafka.eagle.web.service.UserInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,7 +38,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * 管理员系统功能接口
@@ -46,22 +47,25 @@ import java.util.UUID;
 @Controller
 @RequestMapping("/system")
 @Api("系統服务")
+@Slf4j
 public class SystemController {
 
-	@Autowired
-	private RoleService roleService;
-	@Autowired
-	private UserInfoService userInfoService;
+    @Autowired
+    private RoleService roleService;
+    @Autowired
+    private UserInfoService userInfoService;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-	@GetMapping("/role")
+    @GetMapping("/role")
     @ApiOperation("跳转角色界面")
-	public String roleView() {
+    public String roleView() {
         return "/system/role";
-	}
+    }
 
-	@GetMapping("/user")
+    @GetMapping("/user")
     @ApiOperation("跳转用户视图")
-	public String userView() {
+    public String userView() {
         return "/system/user";
 	}
 
@@ -75,24 +79,24 @@ public class SystemController {
 	@PostMapping("/user/add")
     @ApiOperation("添加用户")
 	public String addUser(HttpServletRequest request) {
-		String rtxno = request.getParameter("ke_rtxno_name");
-		String username = request.getParameter("ke_user_name");
-		String realname = request.getParameter("ke_real_name");
-		String email = request.getParameter("ke_user_email");
+        String rtxno = request.getParameter("ke_rtxno_name");
+        String username = request.getParameter("ke_user_name");
+        String realname = request.getParameter("ke_real_name");
+        String email = request.getParameter("ke_user_email");
 
-		UserInfo signin = new UserInfo();
-		signin.setEmail(email);
-		signin.setPassword(UUID.randomUUID().toString().substring(0, 8));
-		signin.setRealname(realname);
-		signin.setRtxno(Integer.parseInt(rtxno));
-		signin.setUsername(username);
-		try {
-			return userInfoService.insertUser(signin) > 0 ? "redirect:/system/user" : "redirect:/500";
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			return "redirect:/500";
-		}
-	}
+        UserInfo signin = new UserInfo();
+        signin.setEmail(email);
+        signin.setPassword(passwordEncoder.encode(username));
+        signin.setRealname(realname);
+        signin.setRtxno(Integer.parseInt(rtxno));
+        signin.setUsername(username);
+        try {
+            return userInfoService.insertUser(signin) > 0 ? "redirect:/system/user" : "redirect:/500";
+        } catch (Exception ex) {
+            log.error("用户【{}】添加失败", username, ex);
+            return "redirect:/500";
+        }
+    }
 
 	@PostMapping("/user/modify")
     @ApiOperation("修改用户信息")
@@ -110,23 +114,18 @@ public class SystemController {
 		return userInfoService.modify(signin) > 0 ? "redirect:/system/user" : "redirect:/500";
 	}
 
-	@PostMapping("/user/reset")
-    @ApiOperation("重置用户信息")
+    @PostMapping("/user/reset")
+    @ApiOperation("重置用户密码")
 	public String resetUser(HttpServletRequest request) {
-		String password = request.getParameter("ke_user_new_pwd_reset");
-		String rtxnode = request.getParameter("ke_user_rtxno_reset");
+        String password = request.getParameter("ke_user_new_pwd_reset");
+        String rtxnode = request.getParameter("ke_user_rtxno_reset");
+        UserInfo userInfo = new UserInfo();
+        userInfo.setRtxno(Integer.parseInt(rtxnode));
+        userInfo.setPassword(passwordEncoder.encode(password));
+        return userInfoService.resetPassword(userInfo) > 0 ? "redirect:/system/user" : "redirect:/500";
+    }
 
-		UserInfo signin = new UserInfo();
-		signin.setRtxno(Integer.parseInt(rtxnode));
-        signin.setPassword(password);
-		if (userInfoService.resetPassword(signin) > 0) {
-			return "redirect:/system/user";
-		} else {
-			return "redirect:/500";
-		}
-	}
-
-	@GetMapping("/user/signin/rtxno/ajax")
+	@GetMapping("/user/signin/rtxno")
     @ResponseBody
     @ApiOperation("获取自动生成的用户账号")
 	public String getUserRtxNo() {
@@ -144,9 +143,9 @@ public class SystemController {
 	}
 
 	/** Get the roles that the user owns. */
-	@GetMapping(value = "/user/role/table/ajax")
+	@GetMapping(value = "/user/role/table")
     @ResponseBody
-    @ApiOperation("差和讯用户角色信息")
+    @ApiOperation("查询用户角色信息")
 	public String getUserRoleAjax(HttpServletRequest request) {
 		String aoData = request.getParameter("aoData");
 		JSONArray params = JSON.parseArray(aoData);
@@ -186,10 +185,14 @@ public class SystemController {
 			if (KafkaConstants.ADMIN.equals(role.getString("username"))) {
 				obj.put("operate", "");
 			} else {
-				obj.put("operate",
-						"<div class='btn-group'><button class='btn btn-primary btn-xs dropdown-toggle' type='button' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>Action <span class='caret'></span></button><ul class='dropdown-menu dropdown-menu-right'><li><a id='operater_modal' name='operater_modal' href='#"
-								+ id + "/'><i class='fa fa-fw fa-adn'></i>Assign</a></li><li><a name='operater_reset_modal' href='#" + id + "'><i class='fa fa-fw fa-gear'></i>Reset</a></li><li><a name='operater_modify_modal' href='#" + id + "'><i class='fa fa-fw fa-edit'></i>Modify</a></li><li><a href='/system/user/delete/" + id
-								+ "/'><i class='fa fa-fw fa-trash-o'></i>Delete</a></li></ul></div>");
+                obj.put("operate",
+                        "<div class='btn-group'><button class='btn btn-primary btn-xs dropdown-toggle' type='button' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>Action <span class='caret'></span></button>" +
+                                "<ul class='dropdown-menu dropdown-menu-right'>" +
+                                "<li><a id='operater_modal' name='operater_modal' href='#" + id + "'><i class='fa fa-fw fa-adn'></i>Assign</a></li>" +
+                                "<li><a name='operater_reset_modal' href='#" + id + "'><i class='fa fa-fw fa-gear'></i>Reset</a></li>" +
+                                "<li><a name='operater_modify_modal' href='#" + id + "'><i class='fa fa-fw fa-edit'></i>Modify</a></li>" +
+                                "<li><a href='/system/user/delete/" + id + "'><i class='fa fa-fw fa-trash-o'></i>Delete</a></li>" +
+                                "</ul></div>");
 			}
 			aaDatas.add(obj);
 		}
@@ -204,8 +207,7 @@ public class SystemController {
 	}
 
 	/** Get all the roles of the system. */
-	@SuppressWarnings("unused")
-	@GetMapping("/role/table/ajax")
+	@GetMapping("/role/table")
     @ResponseBody
     @ApiOperation("获取所有角色信息")
 	public String getRolesAjax(HttpServletResponse response, HttpServletRequest request) {
@@ -247,7 +249,7 @@ public class SystemController {
 	}
 
 	/** Obtain the resources it owns through the role id. */
-	@GetMapping("/role/resource/{roleId}/ajax")
+	@GetMapping("/role/resource/{roleId}")
     @ResponseBody
     @ApiOperation("获取角色拥有权限")
 	public String roleResourceAjax(@PathVariable("roleId") int roleId) {
@@ -255,7 +257,7 @@ public class SystemController {
 	}
 
 	/** Find siginer through the user id. */
-	@GetMapping(value = "/user/signin/{id}/ajax")
+	@GetMapping(value = "/user/signin/{id}")
     @ResponseBody
     @ApiOperation("查询用户信息")
 	public String findUserByIdAjax(@PathVariable("id") int id) {
@@ -263,7 +265,7 @@ public class SystemController {
 	}
 
 	/** Change the user's role. */
-	@GetMapping("/user/role/{action}/{userId}/{roleId}/ajax")
+	@GetMapping("/user/role/{action}/{userId}/{roleId}")
     @ResponseBody
     @ApiOperation("修改用户角色")
 	public String  changeUserRoleAjax(@PathVariable("action") String action, @PathVariable("userId") int userId, @PathVariable("roleId") int roleId, HttpServletResponse response, HttpServletRequest request) {
@@ -292,7 +294,7 @@ public class SystemController {
 	}
 
 	/** Get the corresponding roles through the user id. */
-	@GetMapping("/user/role/{userId}/ajax")
+	@GetMapping("/user/role/{userId}")
     @ResponseBody
     @ApiOperation("查询用户角色")
 	public String userRoleAjax(@PathVariable("userId") int userId) {

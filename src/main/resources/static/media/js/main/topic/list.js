@@ -6,7 +6,7 @@ $(document).ready(function() {
 		"bProcessing" : true,
 		"bServerSide" : true,
 		"fnServerData" : retrieveData,
-		"sAjaxSource" : "/topic/list/table/ajax",
+		"sAjaxSource" : "/topic/list/table",
 		"aoColumns" : [ {
 			"mData" : 'id'
 		}, {
@@ -135,7 +135,7 @@ $(document).ready(function() {
 	$("#select2val").select2({
 		placeholder : "Topic",
 		ajax : {
-			url : "/topic/mock/list/ajax",
+			url : "/topic/mock/list",
 			dataType : 'json',
 			delay : 250,
 			data : function(params) {
@@ -283,7 +283,7 @@ $(document).ready(function() {
 		$.ajax({
 			type : 'get',
 			dataType : 'json',
-			url : '/topic/list/filter/select/ajax?stime=' + stime + '&etime=' + etime,
+			url : '/topic/list/filter/select?stime=' + stime + '&etime=' + etime,
 			beforeSend : function(xmlHttp) {
 				xmlHttp.setRequestHeader("If-Modified-Since", "0");
 				xmlHttp.setRequestHeader("Cache-Control", "no-cache");
@@ -337,7 +337,7 @@ $(document).ready(function() {
 		$.ajax({
 			type : 'get',
 			dataType : 'json',
-			url : '/topic/list/filter/select/ajax?stime=' + stime + '&etime=' + etime + '&topics=' + topics,
+			url : '/topic/list/filter/select?stime=' + stime + '&etime=' + etime + '&topics=' + topics,
 			success : function(datas) {
 				if (datas != null) {
 					setProducerBarData(topic_producer_agg, datas);

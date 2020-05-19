@@ -17,6 +17,7 @@
  */
 package org.smartloli.kafka.eagle.web.service;
 
+import com.alibaba.fastjson.JSONArray;
 import org.apache.kafka.common.TopicPartition;
 import org.smartloli.kafka.eagle.web.protocol.*;
 
@@ -26,48 +27,57 @@ import java.util.Set;
 
 /**
  * Kafka group,topic and partition interface.
- * 
  * @author smartloli.
- *
- *         Created by Jan 18, 2017
- * 
- *         Update by hexiang 20170216
+ * Created by Jan 18, 2017
+ * Update by hexiang 20170216
  */
 public interface KafkaService {
 
-	/** Find topic and group exist in zookeeper. */
-	boolean findTopicAndGroupExist(String clusterAlias, String topic, String group);
+    /**
+     * 查询消费组是否消费指定主题
+     * @param clusterAlias kafka集群名称
+     * @param topic 主题名称
+     * @param consumerGroup 消费组名称
+     * @return
+     */
+	boolean findTopicExistInGroup(String clusterAlias, String topic, String consumerGroup);
 
     /**
-     * Obtaining metadata in zookeeper by topic.
+     * 获取主题分区信息
+     * @param clusterAlias 集群名
+     * @param topic 主题名称
+     * @return List.
      */
     List<String> findTopicPartition(String clusterAlias, String topic);
 
     /**
-     * Get kafka active consumer topic.
+     * 获取活跃kafka消费者主题信息
+     * @param clusterName kafka系群名
      */
-    Map<String, List<String>> getActiveTopic(String clusterAlias);
+    Map<String, List<String>> findActiveTopics(String clusterName);
 
     /**
-     * Get kafka active consumer topic.
+     * 获取kafka集群消费组订阅的活跃主题信息
+     * @param clusterAlias kafka集群名称
+     * @param consumerGroup 消费组
+     * @return
      */
-    Set<String> getActiveTopic(String clusterAlias, String group);
+    Set<String> findActiveTopics(String clusterAlias, String consumerGroup);
 
     /**
      * 通过别名获取Kafka 代理节点信息
      *
-     * @param clusterName kafka集群列表
+     * @param clusterName kafka集群名称
      * @return
      */
     List<KafkaBrokerInfo> getBrokerInfos(String clusterName);
 
     /**
      * 通过别名获取Kafka 代理节点信息
-     *
      * @param clusterNames kafka集群列表
      * @return
      */
-    Map<String, List<KafkaBrokerInfo>> getAllBrokerInfos(List<String> clusterNames);
+    Map<String, List<KafkaBrokerInfo>> getBrokerInfos(List<String> clusterNames);
 
     /**
      * Get broker host info from ids.
@@ -75,29 +85,28 @@ public interface KafkaService {
     String getBrokerJMXFromIds(String clusterAlias, int ids);
 
     /**
-     * Obtaining kafka consumer information from zookeeper.
+     * 从Zookeeper获取分页消费者信息
+     *
+     * @param clusterAlias kafka集群名称
+     * @param displayInfo 分页请求
      */
-    Map<String, List<String>> getConsumers(String clusterAlias);
+    Map<String, List<String>> getConsumers(String clusterAlias, DisplayInfo displayInfo);
 
     /**
-     * Obtaining kafka consumer page information from zookeeper.
+     * 获取消费组监听主题的偏移量
+     * @param clusterAlias kafka集群名称
+     * @param topic 主题名称
+     * @param group 消费组名
+     * @param partition 分区号
+     * @return
      */
-    Map<String, List<String>> getConsumers(String clusterAlias, DisplayInfo page);
-
-	/** According to group, topic and partition to get offset from zookeeper. */
-	OffsetZkInfo getOffset(String clusterAlias, String topic, String group, int partition);
+	OffsetZkInfo getGroupTopicPartitionOffset(String clusterAlias, String topic, String group, int partition);
 
 	/** Get kafka 0.10.x offset from topic. */
 	String getKafkaOffset(String clusterAlias);
 	
 	/** Get the data for the topic partition in the specified consumer group */
 	Map<Integer, Long> getKafkaOffset(String clusterAlias, String group, String topic, Set<Integer> partitionids);
-
-	/** Use kafka console comand to create topic. */
-	Map<String, Object> create(String clusterAlias, String topicName, String partitions, String replic);
-
-	/** Use kafka console command to delete topic. */
-    Map<String, Object> delete(String clusterAlias, String topicName);
 
     /**
      * 解析集群代理服务器信息
@@ -114,18 +123,23 @@ public interface KafkaService {
 
 	/** Get kafka 0.10.x consumer topic, maybe consumer topic owner is null. */
 	Set<String> getKafkaConsumerTopics(String clusterAlias, String group);
-
-	/** Get kafka 0.10.x consumer group & topic information. */
-	String getKafkaConsumer(String clusterAlias);
 	
 	/** Get kafka 0.10.x consumer group & topic information used for page. */
 	String getKafkaConsumer(String clusterAlias, DisplayInfo displayInfo);
+
+    /**
+     * 获取Kafka元数据信息
+     * @param clusterAlias kafka集群名称
+     * @param group 消费组名称
+     * @return
+     */
+    JSONArray getKafkaMetadata(String clusterAlias, String group);
 
 	@Deprecated
 	/** Get kafka consumer information pages. */ String getKafkaActiverSize(String clusterAlias, String group);
 
 	/** Get kafka consumer information pages not owners. */
-	OwnerInfo getKafkaActiverNotOwners(String clusterAlias, String group);
+	OwnerInfo getKafkaActiveNotOwners(String clusterAlias, String group);
 
 	/** Get kafka broker bootstrap server. */
 	String getKafkaBrokerServer(String clusterAlias);
@@ -140,16 +154,16 @@ public interface KafkaService {
 	long getKafkaLogSize(String clusterAlias, String topic, int partitionid);
 
 	/** Get kafka topic history batch logsize. */
-	Map<TopicPartition, Long> getKafkaLogSize(String clusterAlias, String topic, Set<Integer> partitionids);
+	Map<TopicPartition, Long> getKafkaLogSize(String clusterAlias, String topic, Set<Integer> partitionIds);
 
 	/** Get kafka topic real logsize by partitionid. */
-	long getKafkaRealLogSize(String clusterAlias, String topic, int partitionid);
+	long getKafkaRealLogSize(String clusterAlias, String topic, int partitionId);
 
 	/** Get kafka topic real logsize by partitionid set. */
-	long getKafkaRealLogSize(String clusterAlias, String topic, Set<Integer> partitionids);
+	long getKafkaRealLogSize(String clusterAlias, String topic, Set<Integer> partitionIds);
 	
 	/** Get topic producer send logsize records. */
-	long getKafkaProducerLogSize(String clusterAlias, String topic, Set<Integer> partitionids);
+	long getKafkaProducerLogSize(String clusterAlias, String topic, Set<Integer> partitionIds);
 
 	/** Get kafka sasl topic metadate. */
 	List<MetadataInfo> findKafkaLeader(String clusterAlias, String topic);
@@ -173,9 +187,13 @@ public interface KafkaService {
 	long getRealLogSize(String clusterAlias, String topic, int partitionid);
 
     /**
-     * Get topic metadata.
+     * 获取主题分区的复制分区编号信息
+     * @param clusterAlias kafka集群信息
+     * @param topic 主题名称
+     * @param partitionId 分区id
+     * @return
      */
-    String getReplicasIsr(String clusterAlias, String topic, int partitionid);
+    String getTopicPartitionReplicas(String clusterAlias, String topic, int partitionId);
 
     /**
      * Get kafka version.

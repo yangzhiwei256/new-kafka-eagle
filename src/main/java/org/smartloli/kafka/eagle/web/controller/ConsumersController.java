@@ -24,6 +24,7 @@ import org.smartloli.kafka.eagle.web.config.KafkaClustersConfig;
 import org.smartloli.kafka.eagle.web.constant.KafkaConstants;
 import org.smartloli.kafka.eagle.web.constant.TopicConstants;
 import org.smartloli.kafka.eagle.web.protocol.DisplayInfo;
+import org.smartloli.kafka.eagle.web.protocol.TopicConsumerInfo;
 import org.smartloli.kafka.eagle.web.service.ConsumerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -38,6 +39,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.List;
 
 /**
  * Kafka 消费者控制器
@@ -70,7 +72,7 @@ public class ConsumersController {
     /**
      * Get consumer data by ajax.
      */
-	@GetMapping("/consumers/info/ajax")
+	@GetMapping("/consumers/info")
     @ResponseBody
 	public String consumersGraphAjax(HttpServletRequest request) {
 		HttpSession session = request.getSession();
@@ -81,7 +83,7 @@ public class ConsumersController {
 	}
 
 	/** Get consumer datasets by ajax. */
-	@RequestMapping(value = "/consumer/list/table/ajax", method = RequestMethod.GET)
+	@RequestMapping(value = "/consumer/list/table", method = RequestMethod.GET)
     @ResponseBody
 	public String consumerTableAjax(HttpServletResponse response, HttpServletRequest request) {
 		String aoData = request.getParameter("aoData");
@@ -150,7 +152,7 @@ public class ConsumersController {
 	}
 
 	/** Get consumer data through group by ajax. */
-	@RequestMapping(value = "/consumer/group/table/ajax", method = RequestMethod.GET)
+	@RequestMapping(value = "/consumer/group/table", method = RequestMethod.GET)
     @ResponseBody
 	public String consumerTableListAjax(HttpServletRequest request) {
 		String aoData = request.getParameter("aoData");
@@ -176,17 +178,15 @@ public class ConsumersController {
         HttpSession session = request.getSession();
         String clusterAlias = session.getAttribute(KafkaConstants.CLUSTER_ALIAS).toString();
         String formatter = kafkaClustersConfig.getClusterConfigByName(clusterAlias).getOffsetStorage();
-        JSONArray consumerDetails = JSON.parseArray(consumerService.getConsumerDetail(clusterAlias, formatter, group));
+        List<TopicConsumerInfo> topicConsumerInfos = consumerService.getConsumerDetail(clusterAlias, formatter, group);
         int offset = 0;
         JSONArray aaDatas = new JSONArray();
-        for (Object object : consumerDetails) {
-            JSONObject consumerDetail = (JSONObject) object;
+        for (TopicConsumerInfo topicConsumerInfo : topicConsumerInfos) {
             if (offset < (iDisplayLength + iDisplayStart) && offset >= iDisplayStart) {
                 JSONObject obj = new JSONObject();
-                String topic = consumerDetail.getString("topic");
-                obj.put("id", consumerDetail.getInteger("id"));
+                String topic = topicConsumerInfo.getTopic();
+                obj.put("id", topicConsumerInfo.getId());
 				obj.put("topic", topic);
-
 				try {
 					group = URLEncoder.encode(group, "UTF-8");
 					topic = URLEncoder.encode(topic, "UTF-8");
@@ -194,9 +194,9 @@ public class ConsumersController {
 					e.printStackTrace();
 				}
 
-				if (consumerDetail.getInteger("isConsumering") == TopicConstants.RUNNING) {
+				if (TopicConstants.RUNNING.equals(topicConsumerInfo.getConsuming())) {
 					obj.put("isConsumering", "<a href='/consumers/offset/?group=" + group + "&topic=" + topic + "' target='_blank' class='btn btn-success btn-xs'>Running</a>");
-				} else if (consumerDetail.getInteger("isConsumering") == TopicConstants.SHUTDOWN) {
+				} else if (TopicConstants.SHUTDOWN.equals(topicConsumerInfo.getConsuming())) {
 					obj.put("isConsumering", "<a href='/consumers/offset/?group=" + group + "&topic=" + topic + "' target='_blank' class='btn btn-danger btn-xs'>Shutdown</a>");
 				} else {
 					obj.put("isConsumering", "<a href='/consumers/offset/?group=" + group + "&topic=" + topic + "' target='_blank' class='btn btn-warning btn-xs'>Pending</a>");
@@ -208,8 +208,8 @@ public class ConsumersController {
 
 		JSONObject target = new JSONObject();
 		target.put("sEcho", sEcho);
-		target.put("iTotalRecords", consumerDetails.size());
-		target.put("iTotalDisplayRecords", consumerDetails.size());
+		target.put("iTotalRecords", topicConsumerInfos.size());
+		target.put("iTotalDisplayRecords", topicConsumerInfos.size());
 		target.put("aaData", aaDatas);
 		return target.toJSONString();
 	}

@@ -10,7 +10,7 @@ $(document).ready(
 				"bProcessing" : true,
 				"bServerSide" : true,
 				"fnServerData" : retrieveData,
-				"sAjaxSource" : "/topic/meta/" + topicName + "/ajax",
+				"sAjaxSource" : "/topic/meta/" + topicName,
 				"aoColumns" : [ {
 					"mData" : 'topic'
 				}, {
@@ -48,7 +48,7 @@ $(document).ready(
 			$.ajax({
 				type : 'get',
 				dataType : 'json',
-				url : '/topic/meta/mbean/' + topicName + '/ajax',
+				url : '/topic/meta/mbean/' + topicName ,
 				success : function(datas) {
 					if (datas != null) {
 						$("#topic_metrics_tab").html("")
@@ -92,7 +92,7 @@ $(document).ready(
 			$.ajax({
 				type : 'get',
 				dataType : 'json',
-				url : '/topic/meta/jmx/' + topicName + '/ajax',
+				url : '/topic/meta/jmx/' + topicName ,
 				success : function(datas) {
 					if (datas != null) {
 						$("#producer_logsize").text(datas.logsize);
@@ -205,7 +205,7 @@ $(document).ready(
 				$.ajax({
 					type : 'get',
 					dataType : 'json',
-					url : '/topic/producer/chart/ajax?stime=' + stime + '&etime=' + etime + '&topic=' + topicName,
+					url : '/topic/producer/chart?stime=' + stime + '&etime=' + etime + '&topic=' + topicName,
 					beforeSend : function(xmlHttp) {
 						xmlHttp.setRequestHeader("If-Modified-Since", "0");
 						xmlHttp.setRequestHeader("Cache-Control", "no-cache");

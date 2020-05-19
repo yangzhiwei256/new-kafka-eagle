@@ -46,8 +46,8 @@
     </resultMap>
 
     <insert id="insertOrUpdateAlarmConfig" parameterType="org.smartloli.kafka.eagle.web.protocol.alarm.AlarmConfigInfo">
-        replace into
-		ke_alarm_config(`cluster`,`alarm_group`,`alarm_type`,`alarm_url`,`http_method`,`alarm_address`,`created`,`modify`)
+        insert into ke_alarm_config(cluster, alarm_group, alarm_type, alarm_url, http_method, alarm_address, created,
+                                    modify)
         values (#{cluster}, #{alarmGroup}, #{alarmType}, #{alarmUrl}, #{httpMethod}, #{alarmAddress}, #{created},
                 #{modify})
     </insert>
@@ -62,9 +62,9 @@
     <select id="getAlarmConfigList" parameterType="map" resultMap="alarmConfig">
 		select * from ke_alarm_config
 		<where>
-			`cluster`=#{cluster}
-			<if test="search!=null and search!=''">
-                andalarm_grouplike #{search}
+            cluster=#{cluster}
+            <if test="search!=null and search!=''">
+                and alarm_group like #{search}
             </if>
 		</where>
 		limit #{start},#{size}
@@ -73,8 +73,8 @@
 	<select id="getAlarmConfigByGroupName" parameterType="map" resultMap="alarmConfig">
 		select * from ke_alarm_config
 		<where>
-            `cluster`=#{cluster}
-            andalarm_group`=#{alarmGroup}
+            cluster=#{cluster}
+            and alarm_group=#{alarmGroup}
         </where>
     </select>
 
@@ -102,9 +102,9 @@
     <select id="getAlarmConsumerAppList" parameterType="map" resultMap="alarmConsumer">
         select * from ke_alarm_consumer
         <where>
-            cluster`=#{cluster}
+            cluster=#{cluster}
             <if test="search!=null and search!=''">
-                and (`id`=#{search} orgroup`=#{search} ortopic`=#{search})
+                and (id=#{search} or 'group'=#{search} or topic=#{search})
             </if>
         </where>
         limit #{start},#{size}
@@ -172,19 +172,19 @@
     <select id="getAlarmClusterList" parameterType="map" resultMap="clustersInfo">
         select * from ke_alarm_clusters
         <where>
-            cluster`=#{cluster}
+            cluster=#{cluster}
             <if test="search!=null and search!=''">
-                and (`id`=#{search} ortype`=#{search})
+                and (id=#{search} or type=#{search})
             </if>
 		</where>
-        order byidasc limit #{start},#{size}
+        order by id asc limit #{start},#{size}
     </select>
 
 	<select id="getAlarmClusterCount" parameterType="map" resultType="Integer">
 		select count(*) from ke_alarm_clusters
 		<where>
-			`cluster`=#{cluster}
-		</where>
+            cluster=#{cluster}
+        </where>
     </select>
 
     <delete id="deleteAlarmClusterAlertById" parameterType="Integer">

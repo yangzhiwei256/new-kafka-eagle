@@ -5,7 +5,7 @@ $(document).ready(function() {
 		"bProcessing" : true,
 		"bServerSide" : true,
 		"fnServerData" : retrieveData,
-		"sAjaxSource" : "/system/user/role/table/ajax",
+		"sAjaxSource" : "/system/user/role/table",
 		"aoColumns" : [ {
 			"mData" : 'rtxno'
 		}, {
@@ -41,7 +41,7 @@ $(document).ready(function() {
 		$.ajax({
 			type : 'get',
 			dataType : 'json',
-			url : '/system/user/signin/rtxno/ajax/',
+			url : '/system/user/signin/rtxno/',
 			success : function(datas) {
 				$("#ke_rtxno_name").val(datas.rtxno);
 				$("#ke_rtxno_name").attr("readonly","readonly");
@@ -56,7 +56,7 @@ $(document).ready(function() {
 		$.ajax({
 			type : 'get',
 			dataType : 'json',
-			url : '/system/user/signin/' + id + '/ajax',
+			url : '/system/user/signin/' + id ,
 			success : function(datas) {
 				$("#ke_rtxno_name_modify").val(datas.rtxno);
 				$("#ke_real_name_modify").val(datas.realname);
@@ -75,7 +75,7 @@ $(document).ready(function() {
 		$.ajax({
 			type : 'get',
 			dataType : 'json',
-			url : '/system/user/signin/' + id + '/ajax',
+			url : '/system/user/signin/' + id ,
 			success : function(datas) {
 				$("#ke_user_rtxno_reset").val(datas.rtxno);
 			}
@@ -90,7 +90,7 @@ $(document).ready(function() {
 		$.ajax({
 			type : 'get',
 			dataType : 'json',
-			url : '/system/user/role/' + id + '/ajax',
+			url : '/system/user/role/' + id,
 			success : function(datas) {
 				$("#ke_role_list").html("");
 				var chk = "";
@@ -101,14 +101,14 @@ $(document).ready(function() {
 				if (datas.userRole.length > 0) {
 					$("input[type=checkbox]").each(function() {
 						for (var i = 0; i < datas.userRole.length; i++) {
-							if ($(this).is(":checked")) {
-								$(this).attr("checked", false);
-							}
-							if ($(this).val() == datas.userRole[i].roleId) {
-								$(this).attr("checked", true);
-								break;
-							}
-						}
+                            if ($(this).is(":checked")) {
+                                $(this).attr("checked", false);
+                            }
+                            if ($(this).val() === datas.userRole[i].roleId) {
+                                $(this).attr("checked", true);
+                                break;
+                            }
+                        }
 					});
 				}
 			}
@@ -117,9 +117,9 @@ $(document).ready(function() {
 
 	$(document).on("click", ".actionRole", function() {
 		if ($(this).is(":checked")) {
-			updateRole('/system/user/role/add/' + id + '/' + $(this).val() + '/ajax')
+			updateRole('/system/user/role/add/' + id + '/' + $(this).val() )
 		} else {
-			updateRole('/system/user/role/delete/' + id + '/' + $(this).val() + '/ajax')
+			updateRole('/system/user/role/delete/' + id + '/' + $(this).val() )
 		}
 	});
 

@@ -20,6 +20,7 @@ package org.smartloli.kafka.eagle.web.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 import org.smartloli.kafka.eagle.web.config.KafkaClustersConfig;
 import org.smartloli.kafka.eagle.web.constant.KafkaConstants;
 import org.smartloli.kafka.eagle.web.constant.MBeanConstants;
@@ -54,6 +55,7 @@ import java.util.Map.Entry;
  *         Created by Jul 17, 2017 Update by No 3, 2018 by cocodroid
  */
 @Service
+@Slf4j
 public class MetricsServiceImpl implements MetricsService {
 
 	@Autowired
@@ -77,20 +79,19 @@ public class MetricsServiceImpl implements MetricsService {
     @Autowired
     private KafkaClustersConfig kafkaClustersConfig;
 
-    /**
-     * Gets summary monitoring data for all broker.
-     */
+    @Override
     public String getAllBrokersMBean(String clusterAlias) {
-        String result = "";
         List<KafkaBrokerInfo> brokers = kafkaService.getBrokerInfos(clusterAlias);
         int brokerSize = kafkaClustersConfig.getClusterConfigByName(clusterAlias).getBrokerSize();
+        String result = null;
         if (brokers.size() <= brokerSize) {
-            result = getOnlineAllBrokersMBean(clusterAlias, brokers);
+            result = getOnlineAllBrokersMBean(brokers);
         } else {
             Map<String, Object> params = new HashMap<>();
             params.put("cluster", clusterAlias);
             result = getOfflineAllBrokersMBean(params);
         }
+        log.info("查询Kafka集群[{}]代理节点监控信息 ==> {}", clusterAlias, result);
         return result;
     }
 
@@ -146,9 +147,13 @@ public class MetricsServiceImpl implements MetricsService {
 		return JSON.toJSONString(mbeans);
 	}
 
-	/** Gets summary online monitoring data for all broker. */
-	private String getOnlineAllBrokersMBean(String clusterAlias, List<KafkaBrokerInfo> brokers) {
-		Map<String, MBeanInfo> mbeans = new HashMap<>();
+    /**
+     * 获取在线节点监控信息
+     * @param brokers
+     * @return
+     */
+	private String getOnlineAllBrokersMBean(List<KafkaBrokerInfo> brokers) {
+		Map<String, MBeanInfo> mbeanInfoMap = new HashMap<>();
 		for (KafkaBrokerInfo broker : brokers) {
 			String uri = broker.getHost() + ":" + broker.getJmxPort();
 			MBeanInfo bytesIn = mx4jService.bytesInPerSec(uri);
@@ -163,30 +168,19 @@ public class MetricsServiceImpl implements MetricsService {
 			MBeanInfo replicationBytesInPerSec = mx4jService.replicationBytesInPerSec(uri);
 			MBeanInfo replicationBytesOutPerSec = mx4jService.replicationBytesOutPerSec(uri);
 
-			assembleMBeanInfo(mbeans, MBeanConstants.MESSAGES_IN, messageIn);
-
-			assembleMBeanInfo(mbeans, MBeanConstants.BYTES_IN, bytesIn);
-
-			assembleMBeanInfo(mbeans, MBeanConstants.BYTES_OUT, bytesOut);
-
-			assembleMBeanInfo(mbeans, MBeanConstants.BYTES_REJECTED, bytesRejected);
-
-			assembleMBeanInfo(mbeans, MBeanConstants.FAILED_FETCH_REQUEST, failedFetchRequest);
-
-			assembleMBeanInfo(mbeans, MBeanConstants.FAILED_PRODUCE_REQUEST, failedProduceRequest);
-
-			assembleMBeanInfo(mbeans, MBeanConstants.PRODUCEMESSAGECONVERSIONS, produceMessageConversions);
-
-			assembleMBeanInfo(mbeans, MBeanConstants.TOTALFETCHREQUESTSPERSEC, totalFetchRequests);
-
-			assembleMBeanInfo(mbeans, MBeanConstants.TOTALPRODUCEREQUESTSPERSEC, totalProduceRequests);
-
-			assembleMBeanInfo(mbeans, MBeanConstants.REPLICATIONBYTESINPERSEC, replicationBytesInPerSec);
-
-			assembleMBeanInfo(mbeans, MBeanConstants.REPLICATIONBYTESOUTPERSEC, replicationBytesOutPerSec);
-
+			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.MESSAGES_IN, messageIn);
+			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.BYTES_IN, bytesIn);
+			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.BYTES_OUT, bytesOut);
+			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.BYTES_REJECTED, bytesRejected);
+			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.FAILED_FETCH_REQUEST, failedFetchRequest);
+			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.FAILED_PRODUCE_REQUEST, failedProduceRequest);
+			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.PRODUCEMESSAGECONVERSIONS, produceMessageConversions);
+			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.TOTALFETCHREQUESTSPERSEC, totalFetchRequests);
+			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.TOTALPRODUCEREQUESTSPERSEC, totalProduceRequests);
+			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.REPLICATIONBYTESINPERSEC, replicationBytesInPerSec);
+			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.REPLICATIONBYTESOUTPERSEC, replicationBytesOutPerSec);
 		}
-		for (Entry<String, MBeanInfo> entry : mbeans.entrySet()) {
+		for (Entry<String, MBeanInfo> entry : mbeanInfoMap.entrySet()) {
 			if (entry == null || entry.getValue() == null) {
 				continue;
 			}
@@ -195,7 +189,7 @@ public class MetricsServiceImpl implements MetricsService {
 			entry.getValue().setMeanRate(StrUtils.assembly(entry.getValue().getMeanRate()));
 			entry.getValue().setOneMinute(StrUtils.assembly(entry.getValue().getOneMinute()));
 		}
-		return JSON.toJSONString(mbeans);
+		return JSON.toJSONString(mbeanInfoMap);
 	}
 
 	private void assembleMBeanInfo(Map<String, MBeanInfo> mbeans, String mBeanInfoKey, MBeanInfo mBeanInfo) {

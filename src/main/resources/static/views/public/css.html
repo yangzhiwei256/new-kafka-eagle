@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="common_css(title,links)">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title th:replace="${title}"></title>
+    <link th:href="@{/media/css/public/bootstrap.min.css}" rel="stylesheet"/>
+    <link th:href="@{/media/css/public/sb-admin.css}" rel="stylesheet"/>
+    <link th:href="@{/media/css/public/morris.css}" rel="stylesheet"/>
+    <link th:href="@{/media/css/public/font-awesome.min.css}" rel="stylesheet"/>
+    <link th:href="@{/media/css/public/awesome-bootstrap-checkbox.css}" rel="stylesheet"/>
+    <link th:href="@{/media/css/public/magicsuggest.css}" rel="stylesheet"/>
+    <link th:href="@{/media/css/public/codemirror.css}" rel="stylesheet"/>
+    <link th:href="@{/media/css/public/show-hint.css}" rel="stylesheet"/>
+    <link th:href="@{/media/css/public/jquery.terminal.min.css}" rel="stylesheet"/>
+    <link th:href="@{/media/css/public/bootstrap-treeview.min.css}" rel="stylesheet"/>
+    <link rel="shortcut icon" th:href="@{/media/img/favicon.ico}"/>
+    <th:block th:replace="${links}"/>
+</head>
+</html>

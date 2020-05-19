@@ -2,11 +2,12 @@
 
 ---
 变化：
-- springmvc 切换为springboot
-- 安全框架切换未spring security
+- springmvc切换为springboot
+- 安全框架切换为spring security
 - kafka资源采用apache commons pool池化
+- 完成Thymeleaf前端UI改造
 
 ---
 期望:
-- 前端jsp切换HTML模板引擎
 - 新增Kafka主题消息实时更新
+- AngularJS框架替换JQuery

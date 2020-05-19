@@ -28,6 +28,7 @@ import org.smartloli.kafka.eagle.web.protocol.alarm.AlarmConfigInfo;
 import org.smartloli.kafka.eagle.web.protocol.alarm.AlarmConsumerInfo;
 import org.smartloli.kafka.eagle.web.protocol.topic.TopicLogSize;
 import org.smartloli.kafka.eagle.web.service.AlertService;
+import org.smartloli.kafka.eagle.web.service.ConsumerService;
 import org.smartloli.kafka.eagle.web.service.KafkaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -49,9 +50,11 @@ import java.util.regex.Pattern;
 @Service
 public class AlertServiceImpl implements AlertService {
 
-	/** Kafka service interface. */
 	@Autowired
 	private KafkaService kafkaService;
+
+	@Autowired
+	private ConsumerService consumerService;
 
 	@Autowired
 	private AlertDao alertDao;
@@ -83,7 +86,7 @@ public class AlertServiceImpl implements AlertService {
 	}
 
 	private String getAlarmConsumerGroup(String clusterAlias, String search) {
-		Map<String, List<String>> consumers = kafkaService.getConsumers(clusterAlias);
+		Map<String, List<String>> consumers = consumerService.getConsumers(clusterAlias);
 		JSONArray groups = new JSONArray();
 		int offset = 0;
 		if (search.length() > 0) {
@@ -111,7 +114,7 @@ public class AlertServiceImpl implements AlertService {
 	private String getAlarmConsumerGroupKafka(String clusterAlias, String search) {
 		int offset = 0;
 		JSONArray groups = new JSONArray();
-		JSONArray consumerGroups = JSON.parseArray(kafkaService.getKafkaConsumer(clusterAlias));
+		JSONArray consumerGroups = JSON.parseArray(consumerService.getKafkaConsumer(clusterAlias));
 		if (search.length() > 0) {
 			for (Object object : consumerGroups) {
 				JSONObject consumerGroup = (JSONObject) object;
@@ -137,7 +140,7 @@ public class AlertServiceImpl implements AlertService {
 	}
 
 	private String getAlarmConsumerTopic(String clusterAlias, String group, String search) {
-		Map<String, List<String>> consumers = kafkaService.getConsumers(clusterAlias);
+		Map<String, List<String>> consumers = consumerService.getConsumers(clusterAlias);
 		JSONArray topics = new JSONArray();
 		int offset = 0;
 		if (search.length() > 0) {

@@ -8,7 +8,7 @@ $(document).ready(function() {
 			"bProcessing" : true,
 			"bServerSide" : true,
 			"fnServerData" : retrieveData,
-			"sAjaxSource" : "/consumer/list/table/ajax",
+			"sAjaxSource" : "/consumer/list/table",
 			"aoColumns" : [ {
 				"mData" : 'id'
 			}, {
@@ -53,7 +53,7 @@ $(document).ready(function() {
 
 	var vis = d3.select("#active_topic").append("svg:svg").attr("width", w + m[1] + m[3]).attr("height", h + m[0] + m[2]).append("svg:g").attr("transform", "translate(" + m[3] + "," + m[0] + ")");
 
-	d3.json('/consumers/info/ajax', function(json) {
+	d3.json('/consumers/info', function(json) {
 		root = JSON.parse(json.active);
 		root.x0 = h / 2;
 		root.y0 = 0;
@@ -198,7 +198,7 @@ $(document).ready(function() {
 			"bProcessing" : true,
 			"bServerSide" : true,
 			"fnServerData" : retrieveData,
-			"sAjaxSource" : "/consumer/group/table/ajax",
+			"sAjaxSource" : "/consumer/group/table",
 			"aoColumns" : [ {
 				"mData" : 'id'
 			}, {

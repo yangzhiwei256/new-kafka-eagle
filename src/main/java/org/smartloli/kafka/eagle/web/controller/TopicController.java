@@ -137,7 +137,7 @@ public class TopicController {
 	}
 
 	/** Get topic metadata by ajax. */
-	@GetMapping("/topic/meta/{tname}/ajax")
+	@GetMapping("/topic/meta/{tname}")
     @ResponseBody
     @ApiOperation("获取主题元数据")
 	public String topicMetaAjax(@PathVariable("tname") String tname, HttpServletRequest request) {
@@ -194,7 +194,7 @@ public class TopicController {
 	}
 
 	/** Get cluster data by ajax. */
-	@GetMapping("/topic/meta/mbean/{tname}/ajax")
+	@GetMapping("/topic/meta/mbean/{tname}")
     @ResponseBody
     @ApiOperation("获取集群数据")
 	public String topicMetaMetricsAjax(@PathVariable("tname") String tname, HttpSession session) {
@@ -203,7 +203,7 @@ public class TopicController {
 	}
 
 	/** Get cluster data by ajax. */
-	@GetMapping("/topic/meta/jmx/{tname}/ajax")
+	@GetMapping("/topic/meta/jmx/{tname}")
     @ResponseBody
     @ApiOperation("获取集群数据")
 	public String topicMsgByJmxAjax(@PathVariable("tname") String tname, HttpSession session) {
@@ -212,7 +212,7 @@ public class TopicController {
 	}
 
 	/** Get topic datasets by ajax. */
-	@GetMapping("/topic/mock/list/ajax")
+	@GetMapping("/topic/mock/list")
     @ResponseBody
     @ApiOperation("获取模拟主题数据")
 	public String topicMockAjax(HttpServletRequest request) {
@@ -225,7 +225,7 @@ public class TopicController {
 	}
 
 	/** Get topic datasets by ajax. */
-	@GetMapping("/topic/manager/keys/ajax")
+	@GetMapping("/topic/manager/keys")
     @ResponseBody
     @ApiOperation("获取主题数据")
 	public String getTopicProperties(HttpServletRequest request) {
@@ -238,7 +238,7 @@ public class TopicController {
 	}
 
 	/** Get topic datasets by ajax. */
-	@GetMapping("/topic/manager/{type}/ajax")
+	@GetMapping("/topic/manager/{type}")
     @ResponseBody
     @ApiOperation("修改主题配置")
 	public String alterTopicConfigAjax(@PathVariable("type") String type, HttpServletRequest request) {
@@ -275,7 +275,7 @@ public class TopicController {
 	}
 
 	/** Get topic datasets by ajax. */
-	@GetMapping("/topic/list/table/ajax")
+	@GetMapping("/topic/list/table")
     @ResponseBody
     @ApiOperation("主题列表")
 	public String topicListAjax(HttpServletRequest request, @AuthenticationPrincipal UserDetails userDetails) {
@@ -383,7 +383,6 @@ public class TopicController {
 					object.put("operate", "");
 				}
 			}
-
 			aaDatas.add(object);
 		}
 
@@ -396,7 +395,7 @@ public class TopicController {
 	}
 
 	/** Get select topic datasets by ajax. */
-	@PostMapping("/topic/list/select/ajax")
+	@PostMapping("/topic/list/select")
     @ResponseBody
     @ApiOperation("选择列表主题")
 	public String topicSelectListAjax(HttpServletRequest request) {
@@ -407,7 +406,7 @@ public class TopicController {
 	}
 
 	/** Get select filter topic datasets by ajax. */
-	@GetMapping("/topic/list/filter/select/ajax")
+	@GetMapping("/topic/list/filter/select")
     @ResponseBody
     @ApiOperation("过滤主题数据集")
 	public String topicSelectFilterListAjax(HttpServletRequest request) {
@@ -464,7 +463,7 @@ public class TopicController {
 		String ke_topic_partition = request.getParameter("ke_topic_partition");
 		String ke_topic_repli = request.getParameter("ke_topic_repli");
 		String clusterAlias = session.getAttribute(KafkaConstants.CLUSTER_ALIAS).toString();
-		Map<String, Object> respons = kafkaService.create(clusterAlias, ke_topic_name, ke_topic_partition, ke_topic_repli);
+		Map<String, Object> respons = topicService.createTopic(clusterAlias, ke_topic_name, ke_topic_partition, ke_topic_repli);
 		if ("success".equals(respons.get("status"))) {
 			session.removeAttribute("Submit_Status");
 			session.setAttribute("Submit_Status", respons.get("info"));
@@ -482,8 +481,8 @@ public class TopicController {
 	public String topicDelete(@PathVariable("topicName") String topicName, @PathVariable("token") String token, HttpSession session) {
         if (kafkaEagleTopicToken.equals(token) && !KafkaConstants.CONSUMER_OFFSET_TOPIC.equals(topicName)) {
             String clusterAlias = session.getAttribute(KafkaConstants.CLUSTER_ALIAS).toString();
-            Map<String, Object> respons = kafkaService.delete(clusterAlias, topicName);
-            if ("success".equals(respons.get("status"))) {
+            Map<String, String> response = topicService.deleteTopic(clusterAlias, topicName);
+            if ("success".equals(response.get("status"))) {
                 return "redirect:/topic/list";
             } else {
                 return "redirect:/500";
@@ -587,7 +586,7 @@ public class TopicController {
 	}
 
 	/** Get topic sql history. */
-	@GetMapping("/topic/sql/history/ajax")
+	@GetMapping("/topic/sql/history")
     @ResponseBody
     @ApiOperation("kafka sql查询历史")
 	public String topicSqlHistoryAjax(HttpServletRequest request, @AuthenticationPrincipal UserDetails userDetails) {
@@ -656,7 +655,7 @@ public class TopicController {
 	}
 
 	/** Get ksql host or sql detail. */
-	@GetMapping("/topic/ksql/detail/{type}/{id}/ajax")
+	@GetMapping("/topic/ksql/detail/{type}/{id}")
     @ResponseBody
     @ApiOperation("获取KafkaSql详情")
 	public String getKSqlDetailByIdAjax(@PathVariable("id") int id, @PathVariable("type") String type) {
@@ -672,7 +671,7 @@ public class TopicController {
 	}
 
 	/** Get producer chart data by ajax. */
-	@GetMapping("/topic/producer/chart/ajax")
+	@GetMapping("/topic/producer/chart")
     @ResponseBody
     @ApiOperation("生产主题数据")
 	public String topicProducerChartAjax(HttpServletRequest request, HttpSession session) {

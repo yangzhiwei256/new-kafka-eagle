@@ -93,7 +93,7 @@ public final class KafkaResourcePoolUtils implements InitializingBean {
     private int kafkaClientPoolMaxSize;
 
     @Value("${" + KafkaConstants.KAFKA_CLIENT_MIN_IDLE + ":5}")
-    private int kafkaClienPoolMinIdle;
+    private int kafkaClientPoolMinIdle;
 
     @Value("${" + KafkaConstants.KAFKA_CLIENT_MAX_IDLE + ":10}")
     private int kafkaClientPoolMaxIdle;
@@ -107,7 +107,7 @@ public final class KafkaResourcePoolUtils implements InitializingBean {
     @Value("${" + KafkaConstants.KAFKA_EAGLE_SQL_FIX_ERROR + ":false}")
     private Boolean kafkaEagleSqlFixError;
 
-    @Value("${pool.max.wait.ms:1000}")
+    @Value("${pool.max.wait.ms:10000}")
     private Integer poolMaxWaitMs;
 
     @Autowired
@@ -225,12 +225,12 @@ public final class KafkaResourcePoolUtils implements InitializingBean {
         if (CollectionUtils.isEmpty(kafkaClustersConfig.getClusters())) {
             throw new RuntimeException("Kafka集群配置为空,项目无法启动");
         }
-        Map<String, List<KafkaBrokerInfo>> clusterBrokerInfoMap = kafkaService.getAllBrokerInfos(kafkaClustersConfig.getClusterAllAlias());
+        Map<String, List<KafkaBrokerInfo>> clusterBrokerInfoMap = kafkaService.getBrokerInfos(kafkaClustersConfig.getClusterAllAlias());
         log.info("项目启动初始配置kafka集群Broker节点信息：{}", JSON.toJSONString(clusterBrokerInfoMap));
 
         for (SingleClusterConfig singleClusterConfig : kafkaClustersConfig.getClusters()) {
             GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
-            poolConfig.setMinIdle(kafkaClienPoolMinIdle);
+            poolConfig.setMinIdle(kafkaClientPoolMinIdle);
             poolConfig.setMaxIdle(kafkaClientPoolMaxIdle);
             poolConfig.setMaxTotal(kafkaClientPoolMaxSize);
             poolConfig.setTestOnBorrow(true);
@@ -272,12 +272,12 @@ public final class KafkaResourcePoolUtils implements InitializingBean {
         if (CollectionUtils.isEmpty(kafkaClustersConfig.getClusters())) {
             throw new RuntimeException("Kafka集群配置为空,项目无法启动");
         }
-        Map<String, List<KafkaBrokerInfo>> clusterBrokerInfoMap = kafkaService.getAllBrokerInfos(kafkaClustersConfig.getClusterAllAlias());
+        Map<String, List<KafkaBrokerInfo>> clusterBrokerInfoMap = kafkaService.getBrokerInfos(kafkaClustersConfig.getClusterAllAlias());
         log.info("项目启动初始配置kafka集群Broker节点信息：{}", JSON.toJSONString(clusterBrokerInfoMap));
 
         for (SingleClusterConfig singleClusterConfig : kafkaClustersConfig.getClusters()) {
             GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
-            poolConfig.setMinIdle(kafkaClienPoolMinIdle);
+            poolConfig.setMinIdle(kafkaClientPoolMinIdle);
             poolConfig.setMaxIdle(kafkaClientPoolMaxIdle);
             poolConfig.setMaxTotal(kafkaClientPoolMaxSize);
             poolConfig.setTestOnBorrow(true);
@@ -319,12 +319,12 @@ public final class KafkaResourcePoolUtils implements InitializingBean {
         if (CollectionUtils.isEmpty(kafkaClustersConfig.getClusters())) {
             throw new RuntimeException("Kafka集群配置为空,项目无法启动");
         }
-        Map<String, List<KafkaBrokerInfo>> clusterBrokerInfoMap = kafkaService.getAllBrokerInfos(kafkaClustersConfig.getClusterAllAlias());
+        Map<String, List<KafkaBrokerInfo>> clusterBrokerInfoMap = kafkaService.getBrokerInfos(kafkaClustersConfig.getClusterAllAlias());
         log.info("项目启动初始配置kafka集群Broker节点信息：{}", JSON.toJSONString(clusterBrokerInfoMap));
 
         for (SingleClusterConfig singleClusterConfig : kafkaClustersConfig.getClusters()) {
             GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
-            poolConfig.setMinIdle(kafkaClienPoolMinIdle);
+            poolConfig.setMinIdle(kafkaClientPoolMinIdle);
             poolConfig.setMaxIdle(kafkaClientPoolMaxIdle);
             poolConfig.setMaxTotal(kafkaClientPoolMaxSize);
             poolConfig.setTestOnBorrow(true);

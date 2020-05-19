@@ -45,7 +45,7 @@ public class KafkaRecordCleanJob {
     @Autowired
     private MetricsService metricsService;
 
-    @Scheduled(cron = "0 0/5 * * * ?")
+    @Scheduled(cron = "0 */10 * * * ?")
     protected void execute() {
         log.info("JOB IS RUNNING ===> {}", getClass().getSimpleName());
         if (kafkaEagleMetricsCharts) {

@@ -70,7 +70,7 @@ $(document).ready(function() {
 		$.ajax({
 			type : 'get',
 			dataType : 'json',
-			url : '/metrics/trend/mbean/ajax?stime=' + stime + '&etime=' + etime + '&type=' + type + '&modules=' + modules,
+			url : '/metrics/trend/mbean?stime=' + stime + '&etime=' + etime + '&type=' + type + '&modules=' + modules,
 			beforeSend : function(xmlHttp) {
 				xmlHttp.setRequestHeader("If-Modified-Since", "0");
 				xmlHttp.setRequestHeader("Cache-Control", "no-cache");

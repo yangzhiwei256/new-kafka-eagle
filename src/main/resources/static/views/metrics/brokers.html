@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="/public/css :: common_css(~{::title},~{})">
+    <title>Brokers - KafkaEagle</title>
+</head>
+<body>
+<nav th:replace="/public/navbar :: common_navbar"></nav>
+<div id="wrapper">
+    <div id="page-wrapper">
+        <div class="row">
+            <div class="col-lg-12">
+                <h1 class="page-header">
+                    Brokers Metrics <small>overview</small>
+                </h1>
+				</div>
+				<!-- /.col-lg-12 -->
+			</div>
+			<!-- /.row -->
+			<div class="row">
+				<div class="col-lg-12">
+					<div class="alert alert-info alert-dismissable">
+						<button type="button" class="close" data-dismiss="alert"
+							aria-hidden="true">×</button>
+						<i class="fa fa-info-circle"></i> <strong>Through JMX to
+							obtain data, monitor the Kafka client, the production side, the
+							number of messages, the number of requests, processing time and
+							other data to visualize performance .</strong>
+					</div>
+				</div>
+			</div>
+			<!-- /.row -->
+			<div class="row">
+				<div class="col-lg-12">
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<i class="fa fa-tasks fa-fw"></i> Kafka Brokers MBean
+							<div class="pull-right"></div>
+						</div>
+						<!-- /.panel-heading -->
+						<div class="panel-body">
+							<div>
+								<table id="kafka_metrics_tab" class="table table-bordered table-hover">
+								</table>
+							</div>
+						</div>
+						<!-- /.panel-body -->
+					</div>
+				</div>
+				<!-- /.col-lg-4 -->
+			</div>
+			<!-- /.row -->
+		</div>
+		<!-- /#page-wrapper -->
+	</div>
+<div th:replace="/public/script :: common_js(~{::script})">
+    <script th:src="@{/media/js/main/metrics/brokers.js}" type="text/javascript"></script>
+    <script th:src="@{/media/js/plugins/datatables/jquery.dataTables.min.js}"></script>
+    <script th:src="@{/media/js/plugins/datatables/dataTables.bootstrap.min.js}"></script>
+</div>
+</body>
+</html>

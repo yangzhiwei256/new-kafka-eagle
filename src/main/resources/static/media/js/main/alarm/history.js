@@ -5,7 +5,7 @@ $(document).ready(function() {
 		"bProcessing" : true,
 		"bServerSide" : true,
 		"fnServerData" : retrieveData,
-		"sAjaxSource" : "/alarm/history/table/ajax",
+		"sAjaxSource" : "/alarm/history/table",
 		"aoColumns" : [ {
 			"mData" : 'id'
 		}, {
@@ -67,7 +67,7 @@ $(document).ready(function() {
 		$.ajax({
 			type : 'get',
 			dataType : 'json',
-			url : '/alarm/cluster/detail/' + type + '/' + id + '/ajax',
+			url : '/alarm/cluster/detail/' + type + '/' + id ,
 			success : function(datas) {
 				$("#ke_alarm_cluster_property").val(datas.result);
 			}
@@ -161,7 +161,7 @@ $(document).ready(function() {
 		$.ajax({
 			type : 'get',
 			dataType : 'json',
-			url : '/alarm/history/modify/switch/' + id + '/ajax',
+			url : '/alarm/history/modify/switch/' + id ,
 			success : function(datas) {
 			}
 		});
@@ -186,7 +186,7 @@ $(document).ready(function() {
 		$.ajax({
 			type : 'get',
 			dataType : 'json',
-			url : '/alarm/history/modify/' + id + '/ajax',
+			url : '/alarm/history/modify/' + id ,
 			success : function(datas) {
 				$.fn.modal.Constructor.prototype.enforceFocus = function () { };
 				$("#ke_alarm_cluster_name_server").val(datas.server);
@@ -197,17 +197,17 @@ $(document).ready(function() {
 					var option;
 					if (id.indexOf("select2level") > -1) {
 						placeholder = select2placeholder[0];
-						url = "/alarm/cluster/level/list/ajax";
+						url = "/alarm/cluster/level/list";
 						option = new Option(datas.alarmLevel, "0", true, true);
 						$("#ke_alarm_cluster_level").val(datas.alarmLevel);
 					} else if (id.indexOf("select2maxtimes") > -1) {
 						placeholder = select2placeholder[1];
-						url = "/alarm/cluster/maxtimes/list/ajax";
+						url = "/alarm/cluster/maxtimes/list";
 						option = new Option(datas.alarmMaxTimes, "0", true, true);
 						$("#ke_alarm_cluster_maxtimes").val(datas.alarmMaxTimes);
 					} else if (id.indexOf("select2group") > -1) {
 						placeholder = select2placeholder[2];
-						url = "/alarm/cluster/group/list/ajax";
+						url = "/alarm/cluster/group/list";
 						option = new Option(datas.alarmGroup, "0", true, true);
 						$("#ke_alarm_cluster_group").val(datas.alarmGroup);
 					}

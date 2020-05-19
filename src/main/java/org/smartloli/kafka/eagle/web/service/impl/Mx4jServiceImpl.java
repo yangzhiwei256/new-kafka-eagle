@@ -242,8 +242,7 @@ public class Mx4jServiceImpl implements Mx4jService {
 				mbeanInfo.setOneMinute("0.0");
 			}
 		} catch (Exception e) {
-            log.error("JMX service url[" + uri + "] create has error,msg is " + e.getMessage());
-            e.printStackTrace();
+            log.error("JMX service url[" + uri + "] create has error", e);
             mbeanInfo.setFifteenMinute("0.0");
             mbeanInfo.setFiveMinute("0.0");
             mbeanInfo.setMeanRate("0.0");
@@ -253,8 +252,7 @@ public class Mx4jServiceImpl implements Mx4jService {
 				try {
 					connector.close();
 				} catch (Exception e) {
-                    log.error("Close JMXConnector[" + uri + "] has error,msg is " + e.getMessage());
-                    e.printStackTrace();
+                    log.error("Close JMXConnector[" + uri + "] has error", e);
                 }
 			}
 		}

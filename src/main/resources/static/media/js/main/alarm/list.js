@@ -5,7 +5,7 @@ $(document).ready(function() {
 		"bProcessing" : true,
 		"bServerSide" : true,
 		"fnServerData" : retrieveData,
-		"sAjaxSource" : "/alarm/config/table/ajax",
+		"sAjaxSource" : "/alarm/config/table",
 		"aoColumns" : [ {
 			"mData" : 'cluster'
 		}, {
@@ -77,7 +77,7 @@ $(document).ready(function() {
 		$.ajax({
 			type : 'get',
 			dataType : 'json',
-			url : '/alarm/config/get/' + type + '/' + group + '/ajax',
+			url : '/alarm/config/get/' + type + '/' + group ,
 			success : function(datas) {
 				$("#ke_alarm_config_property").val(datas.result);
 			}
@@ -103,7 +103,7 @@ $(document).ready(function() {
 		$.ajax({
 			type : 'get',
 			dataType : 'json',
-			url : '/alarm/config/get/' + type + '/' + group + '/ajax',
+			url : '/alarm/config/get/' + type + '/' + group ,
 			success : function(datas) {
 				$("#ke_alarm_config_m_url").val(datas.url);
 				$("#ke_alarm_config_m_address").val(datas.address);

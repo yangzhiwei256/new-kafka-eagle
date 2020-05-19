@@ -7,12 +7,14 @@ package org.smartloli.kafka.eagle.web.constant;
  */
 public class HttpConstants {
 
+    /** 根路径 **/
+    public final static String ROOT_URL = "/";
+
     /**登陆页**/
-    public final static String LOGIN_URL = "/";
+    public final static String LOGIN_URL = "/account/signin";
 
     /**登陆逻辑**/
     public final static String LOGIN_ACTION_URL = "/account/signin/action";
-
 
     /** 退出登陆 **/
     public final static String LOGOUT_URL = "/account/signout";

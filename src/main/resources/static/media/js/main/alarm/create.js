@@ -3,7 +3,7 @@ $(document).ready(function() {
 	$("#select2type").select2({
 		placeholder : "Alarm Cluster Type",
 		ajax : {
-			url : "/alarm/cluster/type/list/ajax",
+			url : "/alarm/cluster/type/list",
 			dataType : 'json',
 			delay : 250,
 			data : function(params) {
@@ -67,7 +67,7 @@ $(document).ready(function() {
 	$("#select2level").select2({
 		placeholder : "Alarm Cluster Level",
 		ajax : {
-			url : "/alarm/cluster/level/list/ajax",
+			url : "/alarm/cluster/level/list",
 			dataType : 'json',
 			delay : 250,
 			data : function(params) {
@@ -118,7 +118,7 @@ $(document).ready(function() {
 	$("#select2maxtimes").select2({
 		placeholder : "Alarm Cluster Max Times",
 		ajax : {
-			url : "/alarm/cluster/maxtimes/list/ajax",
+			url : "/alarm/cluster/maxtimes/list",
 			dataType : 'json',
 			delay : 250,
 			data : function(params) {
@@ -169,7 +169,7 @@ $(document).ready(function() {
 	$("#select2group").select2({
 		placeholder : "Alarm Cluster Group",
 		ajax : {
-			url : "/alarm/cluster/group/list/ajax",
+			url : "/alarm/cluster/group/list",
 			dataType : 'json',
 			delay : 250,
 			data : function(params) {

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Login - KafkaEagle</title>
+<meta name="description" content="">
+<link rel="shortcut icon" href="/media/img/favicon.ico" />
+<style type="text/css">
+input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill
+	{
+	-webkit-text-fill-color: #ededed !important;
+	-webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+	background-color: transparent;
+	background-image: none;
+	transition: background-color 50000s ease-in-out 0s;
+}
+
+input {
+	background-color: transparent;
+}
+</style>
+<link rel="stylesheet" href="/media/css/public/account/main.css">
+</head>
+
+<body>
+	<div class="login-page">
+		<div class="row">
+			<div class="col-lg-4 col-lg-offset-4">
+				<img class="user-avatar" src="/media/img/ke_login.png" width="150px" alt="avatar">
+				<h1>Kafka Eagle</h1>
+				<form role="form" action="/account/signin/action" method="post" onsubmit="return contextFormValid();">
+					<div class="form-content">
+						<div class="form-group">
+							<input class="form-control input-underline input-lg" id="usr" name="username" placeholder="Account"
+								autocomplete="off" type="text">
+						</div>
+						<div class="form-group">
+							<input class="form-control input-underline input-lg" id="pwd"
+								name="password" placeholder="Password" autocomplete="off" type="password">
+                            <input type="hidden" id="ref_url" name="ref_url">
+						</div>
+						<div class="form-group">
+							<div id="alert_mssage" th:if="${session.error_display}" class="alert alert-danger" th:text="${session.error_msg}"/>
+						</div>
+					</div>
+					<button id="submit" class="btn rounded-btn">Signin</button>
+				</form>
+			</div>
+		</div>
+	</div>
+
+    <!-- 引入公共js： 注意 参数script需与内部标签名相同 -->
+    <div th:replace="/public/script :: common_js(~{::script})">
+        <!-- 私有JS配置 -->
+        <script th:src="@{/media/js/main/account/signin.js}" type="text/javascript"></script>
+    </div>
+</body>
+</html>

@@ -54,7 +54,7 @@ public class ResourcesController {
 	}
 
 	/** Resource graph. */
-	@GetMapping("/resource/graph/ajax")
+	@GetMapping("/resource/graph")
     @ResponseBody
     @ApiOperation("资源视图")
 	public String resGraphAjax() {
@@ -118,7 +118,7 @@ public class ResourcesController {
 	}
 
 	/** Get parent resource. */
-	@GetMapping("/resource/parent/ajax")
+	@GetMapping("/resource/parent")
     @ResponseBody
     @ApiOperation("获取父类资源")
 	public String resParentAjax() {
@@ -126,7 +126,7 @@ public class ResourcesController {
 	}
 
 	/** Get children resource by parent id. */
-	@GetMapping("/resource/child/{parentId}/ajax")
+	@GetMapping("/resource/child/{parentId}")
     @ResponseBody
     @ApiOperation("获取子类资源")
 	public String resChildAjax(@PathVariable("parentId") int parentId) {

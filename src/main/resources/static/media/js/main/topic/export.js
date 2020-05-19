@@ -6,7 +6,7 @@ $(document).ready(function() {
 		"bProcessing" : true,
 		"bServerSide" : true,
 		"fnServerData" : retrieveData,
-		"sAjaxSource" : "/topic/list/table/ajax",
+		"sAjaxSource" : "/topic/list/table",
 		"aoColumns" : [ {
 			"mData" : 'id'
 		}, {

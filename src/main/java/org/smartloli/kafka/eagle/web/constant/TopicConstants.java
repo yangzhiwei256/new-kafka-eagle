@@ -28,9 +28,9 @@ public final class TopicConstants {
     public static final long TOPIC_BROKER_SKEW_NORMAL = 30;
     public static final long TOPIC_BROKER_LEADER_SKEW_ERROR = 80;
     public static final long TOPIC_BROKER_LEADER_SKEW_NORMAL = 30;
-    public static final int RUNNING = 0;
-    public static final int SHUTDOWN = 1;
-    public static final int PENDING = 2;
+    public static final Integer RUNNING = 0;
+    public static final Integer SHUTDOWN = 1;
+    public static final Integer PENDING = 2;
     public static final String RUNNING_STRING = "Running";
     public static final String SHUTDOWN_STRING = "Shutdown";
     public static final String PENDING_STRING = "Pending";

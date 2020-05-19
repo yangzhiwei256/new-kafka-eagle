@@ -51,7 +51,7 @@ public class BigScreenController {
         return "/bscreen/bscreen";
 	}
 
-	@GetMapping("/bs/brokers/ins/outs/realrate/ajax")
+	@GetMapping("/bs/brokers/ins/outs/realrate")
     @ResponseBody
     @ApiOperation("获取实时消费数据")
 	public String getProducerAndConsumerRealRateAjax(HttpServletRequest request) {
@@ -61,7 +61,7 @@ public class BigScreenController {
 	}
 
 	/** Get producer and consumer real rate data by ajax. */
-	@GetMapping(value = "/bs/topic/total/logsize/ajax")
+	@GetMapping(value = "/bs/topic/total/logsize")
     @ResponseBody
     @ApiOperation("获取消费/生产者实时消费数据")
 	public String getTopicTotalLogSizeAjax(HttpServletRequest request) {
@@ -70,7 +70,7 @@ public class BigScreenController {
 		return bscreen.getTopicTotalLogSize(clusterAlias);
 	}
 
-	@GetMapping("/bs/{type}/history/ajax")
+	@GetMapping("/bs/{type}/history")
     @ResponseBody
     @ApiOperation("获取生产/消费历史")
 	public String getProducerOrConsumerHistoryAjax(@PathVariable("type") String type, HttpServletRequest request) {
@@ -79,7 +79,7 @@ public class BigScreenController {
 		return bscreen.getProducerOrConsumerHistory(clusterAlias, type);
 	}
 
-	@GetMapping("/bs/{dtype}/day/ajax")
+	@GetMapping("/bs/{dtype}/day")
     @ResponseBody
     @ApiOperation("获取当天消费/生产数据")
 	public String getTodayOrHistoryConsumerProducerAjax(@PathVariable("dtype") String dtype, HttpServletRequest request) {
@@ -88,7 +88,7 @@ public class BigScreenController {
 		return bscreen.getTodayOrHistoryConsumerProducer(clusterAlias, dtype);
 	}
 
-	@GetMapping("/bs/topic/total/capacity/ajax")
+	@GetMapping("/bs/topic/total/capacity")
     @ResponseBody
     @ApiOperation("获取当天Kafak容量")
 	public String getTopicTotalCapacityAjax(HttpServletRequest request) {

@@ -27,7 +27,7 @@ public class PooledZookeeperFactory extends BasePooledObjectFactory<KafkaZkClien
      */
     @Override
     public KafkaZkClient create() {
-        return KafkaZkClient.apply(zookeeperList, JaasUtils.isZkSecurityEnabled(),
+        return KafkaZkClient.apply(zookeeperList, JaasUtils.isZkSaslEnabled(),
                 sessionTimeout, connectTimeout, Integer.MAX_VALUE, Time.SYSTEM, metricGroupName, "SessionExpireListener");
     }
 

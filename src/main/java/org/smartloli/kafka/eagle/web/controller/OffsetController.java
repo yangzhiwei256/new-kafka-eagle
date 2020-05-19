@@ -32,8 +32,6 @@ import org.smartloli.kafka.eagle.web.util.StrUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -55,15 +53,9 @@ import java.util.Map;
 @Api("Kafka偏移控制器")
 public class OffsetController {
 
-    /**
-     * Offsets consumer data interface.
-     */
     @Autowired
     private OffsetService offsetService;
 
-    /**
-     * Kafka topic service interface.
-     */
     @Autowired
     private TopicService topicService;
 
@@ -73,11 +65,9 @@ public class OffsetController {
     /**
      * Consumer viewer.
      */
-    @RequestMapping(value = "/consumers/offset/", method = RequestMethod.GET)
-    public ModelAndView consumersActiveView(HttpServletRequest request) {
-        ModelAndView mav = new ModelAndView();
-        HttpSession session = request.getSession();
-        String clusterAlias = session.getAttribute(KafkaConstants.CLUSTER_ALIAS).toString();
+    @GetMapping("/consumers/offset")
+    public String consumersActiveView(HttpServletRequest request, HttpSession httpSession) {
+        String clusterAlias = httpSession.getAttribute(KafkaConstants.CLUSTER_ALIAS).toString();
         String formatter = kafkaClustersConfig.getClusterConfigByName(clusterAlias).getOffsetStorage();
         String group = StrUtils.convertNull(request.getParameter("group"));
         String topic = StrUtils.convertNull(request.getParameter("topic"));
@@ -88,18 +78,12 @@ public class OffsetController {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-		if (offsetService.hasGroupTopic(clusterAlias, formatter, group, topic)) {
-			mav.setViewName("/consumers/offset_consumers");
-		} else {
-			mav.setViewName("/error/404");
-		}
-		return mav;
+		return offsetService.hasGroupTopic(clusterAlias, formatter, group, topic) ? "/consumers/offset_consumers" : "/error/404";
 	}
 
 	/** Get real-time offset data from Kafka by ajax. */
-	@RequestMapping(value = "/consumers/offset/realtime/", method = RequestMethod.GET)
-	public ModelAndView offsetRealtimeView(HttpServletRequest request) {
+	@GetMapping("/consumers/offset/realtime")
+	public String offsetRealtimeView(HttpServletRequest request) {
         ModelAndView mav = new ModelAndView();
         HttpSession session = request.getSession();
         String clusterAlias = session.getAttribute(KafkaConstants.CLUSTER_ALIAS).toString();
@@ -113,17 +97,11 @@ public class OffsetController {
         } catch (Exception e) {
 			e.printStackTrace();
 		}
-
-		if (offsetService.hasGroupTopic(clusterAlias, formatter, group, topic)) {
-			mav.setViewName("/consumers/offset_realtime");
-		} else {
-			mav.setViewName("/error/404");
-		}
-		return mav;
+		return offsetService.hasGroupTopic(clusterAlias, formatter, group, topic) ? "/consumers/offset_realtime" : "/error/404";
 	}
 
 	/** Get detail offset from Kafka by ajax. */
-	@GetMapping("/consumer/offset/group/topic/ajax")
+	@GetMapping("/consumer/offset/group/topic")
     @ResponseBody
     @ApiOperation("kafka偏移详情")
 	public String offsetDetailAjax(HttpServletRequest request) {
@@ -193,7 +171,7 @@ public class OffsetController {
 	}
 
 	/** Get real-time offset graph data from Kafka by ajax. */
-	@GetMapping("/consumer/offset/group/topic/realtime/ajax")
+	@GetMapping("/consumer/offset/group/topic/realtime")
     @ResponseBody
     @ApiOperation("kafka偏移图")
 	public String offsetGraphAjax(HttpServletRequest request) {
@@ -218,7 +196,7 @@ public class OffsetController {
 	}
 
 	/** Get real-time offset graph data from Kafka by ajax. */
-	@GetMapping("/consumer/offset/rate/group/topic/realtime/ajax")
+	@GetMapping("/consumer/offset/rate/group/topic/realtime")
     @ResponseBody
     @ApiOperation("kafka偏移比例")
 	public String offsetRateGraphAjax(HttpServletRequest request) {

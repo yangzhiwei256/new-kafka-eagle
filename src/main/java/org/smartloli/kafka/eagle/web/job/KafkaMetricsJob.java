@@ -76,10 +76,10 @@ public class KafkaMetricsJob {
 	@Autowired
 	private Mx4jService mx4jService;
 
-	@Scheduled(cron = "0 0/1 * * * ?")
+	@Scheduled(cron = "0 */10 * * * ?")
     protected void execute() {
         if (kafkaEagleMetricsCharts) {
-            Map<String, List<KafkaBrokerInfo>> kafkaBrokerInfoMap = kafkaService.getAllBrokerInfos(kafkaClustersConfig.getClusterAllAlias());
+            Map<String, List<KafkaBrokerInfo>> kafkaBrokerInfoMap = kafkaService.getBrokerInfos(kafkaClustersConfig.getClusterAllAlias());
             for (SingleClusterConfig singleClusterConfig : kafkaClustersConfig.getClusters()) {
                 List<KafkaBrokerInfo> kafkaBrokerInfoList = kafkaBrokerInfoMap.get(singleClusterConfig.getAlias());
                 kafkaCluster(singleClusterConfig.getAlias(), kafkaBrokerInfoList); //kafka集群数据采集
@@ -213,12 +213,10 @@ public class KafkaMetricsJob {
 
     /**
      * Kafka集群指标数据采集
-     *
      * @param clusterAlias kafka集群名称
      */
     private void kafkaCluster(String clusterAlias, List<KafkaBrokerInfo> brokers) {
         List<KpiInfo> list = new ArrayList<>();
-
         for (String kpi : broker_kpis) {
             KpiInfo kpiInfo = new KpiInfo();
             kpiInfo.setCluster(clusterAlias);
@@ -237,7 +235,6 @@ public class KafkaMetricsJob {
 
     /**
      * kafka指标数据装配
-     *
      * @param type            指标数据类型
      * @param kpiInfo         指标数据
      * @param kafkaBrokerInfo kafka代理服务器信息
@@ -324,6 +321,10 @@ public class KafkaMetricsJob {
 		}
 	}
 
+    /**
+     * Kafka Zookeeper数据采集
+     * @param clusterAlias kafka集群节点名称
+     */
 	private void zkCluster(String clusterAlias) {
         List<KpiInfo> list = new ArrayList<>();
         String zkList = kafkaClustersConfig.getClusterConfigByName(clusterAlias).getZkList();
@@ -334,19 +335,19 @@ public class KafkaMetricsJob {
             kpiInfo.setTm(DateUtils.getCustomDate("yyyyMMdd"));
             kpiInfo.setTimespan(DateUtils.getTimeSpan());
             kpiInfo.setKey(kpi);
-            String broker = "";
+            StringBuilder broker = new StringBuilder();
             for (String zk : zks) {
                 String ip = zk.split(":")[0];
                 String port = zk.split(":")[1];
                 if (port.contains("/")) {
                     port = port.split("/")[0];
                 }
-                broker += ip + ",";
+                broker.append(ip).append(",");
                 try {
                     ZkClusterInfo zkInfo = ZKMetricsUtils.zkClusterMntrInfo(ip, Integer.parseInt(port));
                     zkAssembly(zkInfo, kpi, kpiInfo);
                 } catch (Exception ex) {
-                    log.error("Transcation string[" + port + "] to int has error, msg is ", ex);
+                    log.error("Transcation string[" + port + "] to int has error", ex);
                 }
             }
             kpiInfo.setBroker(broker.length() == 0 ? "unkowns" : broker.substring(0, broker.length() - 1));

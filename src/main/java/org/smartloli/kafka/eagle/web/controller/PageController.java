@@ -18,9 +18,13 @@
 package org.smartloli.kafka.eagle.web.controller;
 
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.lang3.StringUtils;
 import org.smartloli.kafka.eagle.web.constant.HttpConstants;
+import org.smartloli.kafka.eagle.web.constant.KafkaConstants;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+
+import javax.servlet.http.HttpSession;
 
 /**
  * 页面跳转控制器
@@ -32,7 +36,12 @@ public class PageController {
 
     @GetMapping(HttpConstants.LOGIN_URL)
     @ApiOperation("登陆页")
-    public String login() {
+    public String login(HttpSession httpSession) {
+        //预防登陆认证失败页面错误信息无法显示问题
+        if(null == httpSession.getAttribute(KafkaConstants.ERROR_DISPLAY)) {
+            httpSession.setAttribute(KafkaConstants.ERROR_DISPLAY, false);
+            httpSession.setAttribute(KafkaConstants.ERROR_LOGIN, StringUtils.EMPTY);
+        }
         return "/account/signin";
     }
 
@@ -40,7 +49,7 @@ public class PageController {
      * 跳转面板主页
      * @return
      */
-    @GetMapping(HttpConstants.INDEX_URL)
+    @GetMapping({HttpConstants.INDEX_URL, HttpConstants.ROOT_URL})
     @ApiOperation("跳转主页")
     public String toIndex() {
         return "/main/index";

@@ -9,7 +9,7 @@ $(document).ready(function() {
 
 	var vis = d3.select("#kafka_brokers").append("svg:svg").attr("width", w + m[1] + m[3]).attr("height", h + m[0] + m[2]).append("svg:g").attr("transform", "translate(" + m[3] + "," + m[0] + ")");
 
-	d3.json('/dash/kafka/ajax', function(json) {
+	d3.json('/dash/kafka', function(json) {
 		dashboard = JSON.parse(json.dashboard);
 		root = JSON.parse(json.kafka);
 		root.x0 = h / 2;
@@ -165,7 +165,7 @@ $(document).ready(function() {
 		$.ajax({
 			type : 'get',
 			dataType : 'json',
-			url : '/dash/os/mem/ajax',
+			url : '/dash/os/mem',
 			success : function(datas) {
 				if (datas != null) {
 					fillgaugeGrahpPie(datas.mem, "fillgauge_kafka_memory");
@@ -179,7 +179,7 @@ $(document).ready(function() {
 	$.ajax({
 		type : 'get',
 		dataType : 'json',
-		url : '/dash/logsize/table/ajax',
+		url : '/dash/logsize/table',
 		success : function(datas) {
 			if (datas != null) {
 				$("#topic_logsize").html("")
@@ -202,7 +202,7 @@ $(document).ready(function() {
 	$.ajax({
 		type : 'get',
 		dataType : 'json',
-		url : '/dash/capacity/table/ajax',
+		url : '/dash/capacity/table',
 		success : function(datas) {
 			if (datas != null) {
 				$("#topic_capacity").html("")
