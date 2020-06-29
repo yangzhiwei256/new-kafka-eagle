@@ -40,7 +40,7 @@ import org.springframework.web.context.ContextLoader;
 @Slf4j
 public class StartupListener implements ApplicationContextAware {
 
-    private static ApplicationContext applicationContext;
+    private static ApplicationContext beanFactory;
 
     @Autowired
     private KafkaClustersConfig kafkaClustersConfig;
@@ -55,35 +55,31 @@ public class StartupListener implements ApplicationContextAware {
     private MySqlRecordSchema mySqlRecordSchema;
 
     @Override
-    public void setApplicationContext(ApplicationContext arg0) throws BeansException {
-
-        new Thread(() -> {
-            if (JConstants.MYSQL_DRIVER.equals(driverClassName)) {
-                mySqlRecordSchema.schema();
-            } else if (JConstants.SQLITE_DRIVER.equals(driverClassName)) {
-                sqliteRecordSchema.schema();
-            }
-        }).start();
-
-        new Thread(() -> {
-            for (SingleClusterConfig singleClusterConfig : kafkaClustersConfig.getClusters()) {
-                if ("kafka".equals(singleClusterConfig.getOffsetStorage())) {
-                    try {
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        beanFactory = applicationContext;
+        try {
+            Class.forName(JConstants.MYSQL_DRIVER);
+            mySqlRecordSchema.schema();
+        } catch (ClassNotFoundException e) {
+            sqliteRecordSchema.schema();
+        }
+        for (SingleClusterConfig singleClusterConfig : kafkaClustersConfig.getClusters()) {
+            if ("kafka".equals(singleClusterConfig.getOffsetStorage())) {
+                try {
 //                        KafkaOffsetGetter.getInstance();
-                    } catch (Exception ex) {
-                        log.error("Initialize KafkaOffsetGetter thread has error", ex);
-                    }
+                } catch (Exception ex) {
+                    log.error("Initialize KafkaOffsetGetter thread has error", ex);
                 }
             }
-        }).start();
+        }
     }
 
 	public static Object getBean(String beanName) {
-		if (applicationContext == null) {
-			applicationContext = ContextLoader.getCurrentWebApplicationContext();
-		}
-		return applicationContext.getBean(beanName);
-	}
+        if (beanFactory == null) {
+            beanFactory = ContextLoader.getCurrentWebApplicationContext();
+        }
+        return beanFactory.getBean(beanName);
+    }
 
 	public static <T> T getBean(String beanName, Class<T> clazz) {
 		return clazz.cast(getBean(beanName));
