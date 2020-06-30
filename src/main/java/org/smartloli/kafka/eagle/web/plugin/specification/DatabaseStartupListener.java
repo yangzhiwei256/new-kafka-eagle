@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.smartloli.kafka.eagle.web.controller;
+package org.smartloli.kafka.eagle.web.plugin.specification;
 
 import lombok.extern.slf4j.Slf4j;
 import org.smartloli.kafka.eagle.web.config.KafkaClustersConfig;
@@ -25,28 +25,22 @@ import org.smartloli.kafka.eagle.web.plugin.sqlite.SqliteRecordSchema;
 import org.smartloli.kafka.eagle.web.plugin.util.JConstants;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.ContextLoader;
 
 /**
  * Load kafka consumer internal thread to get offset.
+ *
  * @author smartloli.
  * Created by May 22, 2017
  */
 @Component
 @Slf4j
-public class StartupListener implements ApplicationContextAware {
-
-    private static ApplicationContext beanFactory;
+public class DatabaseStartupListener implements ApplicationContextAware {
 
     @Autowired
     private KafkaClustersConfig kafkaClustersConfig;
-
-    @Value("spring.datasource.driver-class-name")
-    private String driverClassName;
 
     @Autowired
     private SqliteRecordSchema sqliteRecordSchema;
@@ -56,32 +50,20 @@ public class StartupListener implements ApplicationContextAware {
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        beanFactory = applicationContext;
         try {
             Class.forName(JConstants.MYSQL_DRIVER);
-            mySqlRecordSchema.schema();
+            mySqlRecordSchema.initAll();
         } catch (ClassNotFoundException e) {
-            sqliteRecordSchema.schema();
+            sqliteRecordSchema.initAll();
         }
         for (SingleClusterConfig singleClusterConfig : kafkaClustersConfig.getClusters()) {
             if ("kafka".equals(singleClusterConfig.getOffsetStorage())) {
                 try {
-//                        KafkaOffsetGetter.getInstance();
+//                  KafkaOffsetGetter.getInstance();
                 } catch (Exception ex) {
                     log.error("Initialize KafkaOffsetGetter thread has error", ex);
                 }
             }
         }
     }
-
-	public static Object getBean(String beanName) {
-        if (beanFactory == null) {
-            beanFactory = ContextLoader.getCurrentWebApplicationContext();
-        }
-        return beanFactory.getBean(beanName);
-    }
-
-	public static <T> T getBean(String beanName, Class<T> clazz) {
-		return clazz.cast(getBean(beanName));
-	}
 }
