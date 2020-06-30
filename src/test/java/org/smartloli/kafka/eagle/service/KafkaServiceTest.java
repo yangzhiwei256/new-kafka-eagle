@@ -1,7 +1,6 @@
 package org.smartloli.kafka.eagle.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsOptions;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -12,7 +11,7 @@ import org.smartloli.kafka.eagle.web.KafkaEagleBootstrap;
 import org.smartloli.kafka.eagle.web.constant.KafkaConstants;
 import org.smartloli.kafka.eagle.web.protocol.MetadataInfo;
 import org.smartloli.kafka.eagle.web.service.KafkaService;
-import org.smartloli.kafka.eagle.web.util.KafkaResourcePoolUtils;
+import org.smartloli.kafka.eagle.web.support.KafkaAdminClientTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -31,6 +30,8 @@ public class KafkaServiceTest {
 
     @Autowired
     private KafkaService kafkaService;
+    @Autowired
+    private KafkaAdminClientTemplate kafkaAdminClientTemplate;
 
     @Test
     public void getKafkaProducerLogSizeTest() {
@@ -59,21 +60,27 @@ public class KafkaServiceTest {
         topicPartitions.add(new TopicPartition(topic, 1));
         topicPartitions.add(new TopicPartition(topic, 2));
 
-        AdminClient adminClient = KafkaResourcePoolUtils.getKafkaClient(cluster);
-        ListConsumerGroupOffsetsOptions listConsumerGroupOffsetsOptions = new ListConsumerGroupOffsetsOptions();
-        listConsumerGroupOffsetsOptions.topicPartitions(topicPartitions);
-        listConsumerGroupOffsetsOptions.timeoutMs(30000);
+        kafkaAdminClientTemplate.doExecute(cluster, adminClient -> {
+            ListConsumerGroupOffsetsOptions listConsumerGroupOffsetsOptions = new ListConsumerGroupOffsetsOptions();
+            listConsumerGroupOffsetsOptions.topicPartitions(topicPartitions);
+            listConsumerGroupOffsetsOptions.timeoutMs(30000);
 
-        Map<TopicPartition, OffsetAndMetadata> offsetMetadataMap =
-                adminClient.listConsumerGroupOffsets(KafkaConstants.KAFKA_EAGLE_SYSTEM_GROUP, listConsumerGroupOffsetsOptions).partitionsToOffsetAndMetadata().get();
-        Assert.assertNotNull(offsetMetadataMap);
+            Map<TopicPartition, OffsetAndMetadata> offsetMetadataMap = null;
+            try {
+                offsetMetadataMap = adminClient.listConsumerGroupOffsets(KafkaConstants.KAFKA_EAGLE_SYSTEM_GROUP,
+                        listConsumerGroupOffsetsOptions).partitionsToOffsetAndMetadata().get();
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+            Assert.assertNotNull(offsetMetadataMap);
 
-        for (Map.Entry<TopicPartition, OffsetAndMetadata> entry : offsetMetadataMap.entrySet()) {
-            TopicPartition topicPartition = entry.getKey();
-            OffsetAndMetadata offsetAndMetadata = entry.getValue();
-            log.info("主题：{},分区:{},当前偏移量:{}", topicPartition.topic(), topicPartition.partition(), offsetAndMetadata.offset());
-        }
-        KafkaResourcePoolUtils.release(cluster, adminClient);
+            for (Map.Entry<TopicPartition, OffsetAndMetadata> entry : offsetMetadataMap.entrySet()) {
+                TopicPartition topicPartition = entry.getKey();
+                OffsetAndMetadata offsetAndMetadata = entry.getValue();
+                log.info("主题：{},分区:{},当前偏移量:{}", topicPartition.topic(), topicPartition.partition(), offsetAndMetadata.offset());
+            }
+            return null;
+        });
     }
 
     /**

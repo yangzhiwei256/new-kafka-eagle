@@ -1,21 +1,20 @@
-package org.smartloli.kafka.eagle.web.util;
+package org.smartloli.kafka.eagle.web.support.factory;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.KafkaAdminClient;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.kafka.common.serialization.StringSerializer;
 import org.smartloli.kafka.eagle.web.constant.KafkaConstants;
 
 import java.util.Properties;
 
-public class PooledKafkaProducerFactory extends BasePooledObjectFactory<KafkaProducer> {
+public class PooledKafkaClientFactory extends BasePooledObjectFactory<AdminClient> {
 
     /**
      * kafka集群节点列表
@@ -49,7 +48,7 @@ public class PooledKafkaProducerFactory extends BasePooledObjectFactory<KafkaPro
      * @param saslEnable       是否开启sasl认证
      * @param properties       附件参数
      */
-    public PooledKafkaProducerFactory(String bootstrapServers, Integer retries, Integer requestTimeoutMs, Boolean saslEnable, Properties properties) {
+    public PooledKafkaClientFactory(String bootstrapServers, Integer retries, Integer requestTimeoutMs, Boolean saslEnable, Properties properties) {
         this.bootstrapServers = bootstrapServers;
         this.retries = retries;
         this.requestTimeoutMs = requestTimeoutMs;
@@ -61,16 +60,12 @@ public class PooledKafkaProducerFactory extends BasePooledObjectFactory<KafkaPro
      * 创建一个对象实例
      */
     @Override
-    public KafkaProducer<String, String> create() {
+    public AdminClient create() {
         Properties kafkaProperties = new Properties();
-        kafkaProperties.put(ConsumerConfig.GROUP_ID_CONFIG, KafkaConstants.KAFKA_EAGLE_SYSTEM_GROUP);
-        kafkaProperties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        kafkaProperties.setProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         kafkaProperties.setProperty(CommonClientConfigs.REQUEST_TIMEOUT_MS_CONFIG, Integer.toString(requestTimeoutMs));
         kafkaProperties.setProperty(CommonClientConfigs.RETRIES_CONFIG, Integer.toString(retries));
-
-        //序列化
-        kafkaProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getCanonicalName());
-        kafkaProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getCanonicalName());
+        kafkaProperties.put(ConsumerConfig.GROUP_ID_CONFIG, KafkaConstants.KAFKA_EAGLE_SYSTEM_GROUP);
         kafkaProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getCanonicalName());
         kafkaProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getCanonicalName());
         if (saslEnable) {
@@ -78,20 +73,20 @@ public class PooledKafkaProducerFactory extends BasePooledObjectFactory<KafkaPro
             kafkaProperties.put(SaslConfigs.SASL_MECHANISM, properties.getProperty(SaslConfigs.SASL_MECHANISM));
             kafkaProperties.put(SaslConfigs.SASL_JAAS_CONFIG, properties.getProperty(SaslConfigs.SASL_JAAS_CONFIG));
 
-            if (!StringUtils.isEmpty(kafkaProperties.getProperty(CommonClientConfigs.CLIENT_ID_CONFIG))) {
+            if (!StringUtils.isEmpty(properties.getProperty(CommonClientConfigs.CLIENT_ID_CONFIG))) {
                 kafkaProperties.put(CommonClientConfigs.CLIENT_ID_CONFIG, properties.getProperty(CommonClientConfigs.CLIENT_ID_CONFIG));
             }
         }
-        return new KafkaProducer<>(kafkaProperties);
+        return KafkaAdminClient.create(kafkaProperties);
     }
 
     @Override
-    public PooledObject<KafkaProducer> wrap(KafkaProducer kafkaProducer) {
-        return new DefaultPooledObject<>(kafkaProducer);
+    public PooledObject<AdminClient> wrap(AdminClient adminClient) {
+        return new DefaultPooledObject<>(adminClient);
     }
 
     @Override
-    public void destroyObject(PooledObject<KafkaProducer> kafkaProducerPooledObject) {
-        kafkaProducerPooledObject.getObject().close();
+    public void destroyObject(PooledObject<AdminClient> adminClientPooledObject) {
+        adminClientPooledObject.getObject().close();
     }
 }

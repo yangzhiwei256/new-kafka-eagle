@@ -16,6 +16,7 @@ public final class KafkaConstants {
     public static final String KAFKA_EAGLE_TOPIC_TOKEN = "kafka.eagle.topic.token";
     public static final String KAFKA_EAGLE_METRICS_CHARTS = "kafka.eagle.metrics.charts";
     public static final String KAFKA_EAGLE_METRICS_RETAIN = "kafka.eagle.metrics.retain";
+    public static final String METRIC_GROUP_NAME = "topic-management-service";
 
     public static final String KAFKA_CONFIG_FILE_NAME = "system-config.properties";
     public static final String CONSUMER_OFFSET_TOPIC = "__consumer_offsets";
@@ -25,7 +26,6 @@ public final class KafkaConstants {
     public static final String EARLIEST = "earliest";
     public static final String JAVA_SECURITY = "java.security.auth.login.config";
     public static final int TIME_OUT = 100;
-    public static final String KAFKA_ZK_CONNECT_TIMEOUT_MS = "kafka.zk.connect.timeout.ms";
 
     public static final String PARTITION_CLASS = "partitioner.class";
     public static final String KEY_SERIALIZER = "key.serializer";
@@ -92,10 +92,6 @@ public final class KafkaConstants {
     /**
      * kafka zookeeper资源池最大数量
      **/
-    public static final String KAFKA_ZK_MAX_TOTAL = "kafka.zk.max.total";
-    public static final String KAFKA_ZK_MIN_IDLE = "kafka.zk.min.idle";
-    public static final String KAFKA_ZK_MAX_IDLE = "kafka.zk.max.idle";
-    public static final String KAFKA_ZK_SESSION_TIMEOUT_MS = "kafka.zk.session.timeout.ms";
     public static final String BROKER_IDS_PATH = "/brokers/ids";
     public static final String BROKER_TOPICS_PATH = "/brokers/topics";
     public static final String DELETE_TOPICS_PATH = "/admin/delete_topics";

@@ -2,7 +2,6 @@ package org.smartloli.kafka.eagle.web.support;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
-import org.springframework.stereotype.Component;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -14,9 +13,8 @@ import java.sql.SQLException;
  * @author zhiwei_yang
  * @time 2020-6-30-8:57
  */
-@Component
 @Slf4j
-public class DatabaseTemplate {
+public class DatabaseTemplate implements ResourceManage<Object, Connection> {
 
     private final DataSourceProperties dataSourceProperties;
 
@@ -29,7 +27,8 @@ public class DatabaseTemplate {
      *
      * @return
      */
-    public Connection getConnection() {
+    @Override
+    public Connection acquire() {
         String address = dataSourceProperties.getUrl();
         String username = dataSourceProperties.getUsername();
         String password = dataSourceProperties.getPassword();
@@ -46,21 +45,15 @@ public class DatabaseTemplate {
      * 执行具体数据库操作
      *
      * @param operationCallback 数据库操作回调接口
-     * @param <R>
+     * @param <R>               返回值
      * @return
      */
     public <R> R doExecute(OperationCallback<Connection, R> operationCallback) {
-        Connection connection = getConnection();
+        Connection connection = this.acquire();
         try {
             return operationCallback.execute(connection);
         } finally {
-            if (null != connection) {
-                try {
-                    connection.close();
-                } catch (SQLException throwables) {
-                    throwables.printStackTrace();
-                }
-            }
+            this.release(null, connection);
         }
     }
 
@@ -71,16 +64,21 @@ public class DatabaseTemplate {
      * @return
      */
     public void doExecute(OperationCallbackWithoutResult<Connection> operationCallbackWithoutResult) {
-        Connection connection = getConnection();
+        Connection connection = this.acquire();
         try {
             operationCallbackWithoutResult.executeWithoutResult(connection);
         } finally {
-            if (null != connection) {
-                try {
-                    connection.close();
-                } catch (SQLException throwables) {
-                    throwables.printStackTrace();
-                }
+            this.release(null, connection);
+        }
+    }
+
+    @Override
+    public void release(Object o, Connection connection) {
+        if (null != connection) {
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
             }
         }
     }

@@ -3,7 +3,7 @@ package org.smartloli.kafka.eagle.pool;
 import kafka.zk.KafkaZkClient;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-import org.smartloli.kafka.eagle.web.util.PooledZookeeperFactory;
+import org.smartloli.kafka.eagle.web.support.factory.PooledZookeeperFactory;
 import org.springframework.util.Assert;
 
 public class PoolObjectPoolTest {

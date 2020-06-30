@@ -1,4 +1,4 @@
-package org.smartloli.kafka.eagle.web.util;
+package org.smartloli.kafka.eagle.web.support.factory;
 
 import kafka.zk.KafkaZkClient;
 import org.apache.commons.pool2.BasePooledObjectFactory;

@@ -21,14 +21,30 @@ import lombok.Data;
 
 /**
  * 面板信息
+ *
  * @author smartloli.
  * Created by Aug 13, 2016
  */
 @Data
-public class DashboardInfo  {
+public class DashboardInfo {
 
-    private long brokers = 0;
-    private long topics = 0;
-    private long zks = 0;
-    private long consumers = 0;
+    /**
+     * 集群代理节点数量
+     **/
+    private Integer brokers = 0;
+
+    /**
+     * 主题数
+     **/
+    private Integer topics = 0;
+
+    /**
+     * zookeeper节点数
+     **/
+    private Integer zks = 0;
+
+    /**
+     * 消费者数量
+     **/
+    private Integer consumers = 0;
 }

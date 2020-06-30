@@ -26,69 +26,99 @@ import java.util.Map;
 /**
  * Consumer group, topic and topic page or partition interface.Kafka api 2.x
  * version.
- * 
+ *
  * @author smartloli.
  *
  *         Created by Jun 13, 2019
  */
 public interface BrokerService {
 
-	/** Check topic from zookeeper metadata. */
+    /**
+     * Check topic from zookeeper metadata.
+     */
     boolean findKafkaTopic(String clusterAlias, String topic);
 
-	/** Get topic list. */
+    /**
+     * 获取集群主题信息
+     */
     List<String> topicList(String clusterAlias);
 
-	/** Get select topic list. */
+    /**
+     * Get select topic list.
+     */
     String topicListParams(String clusterAlias, String search);
 
-	/** Get kafka broker numbers. */
-    long brokerNumbers(String clusterAlias);
+    /**
+     * Get kafka broker numbers.
+     */
+    Integer brokerNumbers(String clusterAlias);
 
-	/** Get topic number from zookeeper. */
-    long topicNumbers(String clusterAlias);
+    /**
+     * Get topic number from zookeeper.
+     */
+    Integer topicNumbers(String clusterAlias);
 
-	/** Get topic number with match name from zookeeper. */
+    /**
+     * Get topic number with match name from zookeeper.
+     */
     long topicNumbers(String clusterAlias, String topic);
 
-	/** Get partition number from zookeeper. */
+    /**
+     * 获取主题分区数量
+     */
     long partitionNumbers(String clusterAlias, String topic);
 
-	/** Scan topic page display. */
+    /**
+     * Scan topic page display.
+     */
     List<PartitionsInfo> topicRecords(String clusterAlias, Map<String, Object> params);
 
-	/** Scan topic meta page display. */
+    /**
+     * Scan topic meta page display.
+     */
     List<MetadataInfo> topicMetadataRecords(String clusterAlias, String topic, Map<String, Object> params);
 
-	/** Get topic producer logsize total. */
+    /**
+     * 获取主题生产者总日志大小
+     */
     long getTopicLogSizeTotal(String clusterAlias, String topic);
 
     /**
      * 获取真实Kafka主题日志数据量
+     *
      * @param clusterAlias kafka集群名称
-     * @param topic 主题名称
+     * @param topic        主题名称
      * @return
      */
     long getTopicRealLogSize(String clusterAlias, String topic);
 
     /**
-     * 获取kafka集群生产者发送主题日志数量
+     * 获取kafka集群生产者发送指定主题日志数量
+     *
      * @param clusterAlias kafka集群名称
-     * @param topic 主题名称
+     * @param topic        主题名称
      * @return
      */
     long getTopicProducerLogSize(String clusterAlias, String topic);
 
-	/** Add topic partitions. */
+    /**
+     * 创建主题分区
+     */
     Map<String, Object> createTopicPartitions(String clusterAlias, String topic, int totalCount);
 
-	/** Get broker spread by topic. */
+    /**
+     * Get broker spread by topic.
+     */
     int getBrokerSpreadByTopic(String clusterAlias, String topic);
 
-	/** Get broker skewed by topic. */
+    /**
+     * Get broker skewed by topic.
+     */
     int getBrokerSkewedByTopic(String clusterAlias, String topic);
 
-	/** Get broker leader skewed by topic. */
+    /**
+     * Get broker leader skewed by topic.
+     */
     int getBrokerLeaderSkewedByTopic(String clusterAlias, String topic);
 
 }

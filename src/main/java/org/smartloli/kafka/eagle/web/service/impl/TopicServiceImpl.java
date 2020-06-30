@@ -39,8 +39,9 @@ import org.smartloli.kafka.eagle.web.protocol.topic.TopicRank;
 import org.smartloli.kafka.eagle.web.protocol.topic.TopicSqlHistory;
 import org.smartloli.kafka.eagle.web.service.*;
 import org.smartloli.kafka.eagle.web.sql.execute.KafkaSqlParser;
+import org.smartloli.kafka.eagle.web.support.KafkaAdminClientTemplate;
+import org.smartloli.kafka.eagle.web.support.OperationCallback;
 import org.smartloli.kafka.eagle.web.util.DateUtils;
-import org.smartloli.kafka.eagle.web.util.KafkaResourcePoolUtils;
 import org.smartloli.kafka.eagle.web.util.StrUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -50,6 +51,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 
 
 /**
@@ -85,6 +87,8 @@ public class TopicServiceImpl implements TopicService {
 
     @Autowired
     private KafkaClustersConfig kafkaClustersConfig;
+    @Autowired
+    private KafkaAdminClientTemplate kafkaAdminClientTemplate;
 
     @Override
     public Map<String, Object> createTopic(String clusterAlias, String topicName, String partitions, String replica) {
@@ -95,16 +99,16 @@ public class TopicServiceImpl implements TopicService {
             targets.put("info", "replication factor: " + replica + " larger than available brokers: " + brokers);
             return targets;
         }
-
-        AdminClient adminClient = KafkaResourcePoolUtils.getKafkaClient(clusterAlias);
-        try {
+        kafkaAdminClientTemplate.doExecute(clusterAlias, adminClient -> {
             NewTopic newTopic = new NewTopic(topicName, Integer.parseInt(partitions), Short.parseShort(replica));
-            adminClient.createTopics(Collections.singleton(newTopic)).all().get();
-        } catch (Exception e) {
-            log.info("Create kafka topic has error", e);
-        } finally {
-            KafkaResourcePoolUtils.release(clusterAlias, adminClient);
-        }
+            try {
+                adminClient.createTopics(Collections.singleton(newTopic)).all().get();
+                return null;
+            } catch (InterruptedException | ExecutionException e) {
+                log.error("Kafka集群【{}】主题【{}】创建失败 partitions ==> {}", clusterAlias, newTopic, partitions, e);
+                return null;
+            }
+        });
         targets.put("status", "success");
         targets.put("info", "Create topic[" + topicName + "] has successed,partitions numbers is [" + partitions + "],replication-factor numbers is [" + replica + "]");
         return targets;
@@ -112,18 +116,20 @@ public class TopicServiceImpl implements TopicService {
 
     @Override
     public Map<String, String> deleteTopic(String clusterAlias, String topicName) {
-        Map<String, String> targets = new HashMap<>();
-        AdminClient adminClient = KafkaResourcePoolUtils.getKafkaClient(clusterAlias);
-        try {
-            adminClient.deleteTopics(Collections.singleton(topicName)).all().get();
-            targets.put("status", "success");
-        } catch (Exception e) {
-            log.error("Delete kafka topic has error", e);
-            targets.put("status", "failed");
-        } finally {
-            KafkaResourcePoolUtils.release(clusterAlias, adminClient);
-        }
-        return targets;
+        return kafkaAdminClientTemplate.doExecute(clusterAlias, new OperationCallback<AdminClient, Map<String, String>>() {
+            @Override
+            public Map<String, String> execute(AdminClient adminClient) {
+                Map<String, String> targets = new HashMap<>();
+                try {
+                    adminClient.deleteTopics(Collections.singleton(topicName)).all().get();
+                    targets.put("status", "success");
+                } catch (Exception e) {
+                    log.error("Delete kafka topic has error", e);
+                    targets.put("status", "failed");
+                }
+                return targets;
+            }
+        });
     }
 
     /**

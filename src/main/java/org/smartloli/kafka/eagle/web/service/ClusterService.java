@@ -22,28 +22,26 @@ import com.alibaba.fastjson.JSONObject;
 
 /**
  * Kafka & KafkaConstants service api.
- * 
- * @author smartloli.
  *
- *         Created by Jan 17, 2017.
- * 
- *         Update by hexiang 20170216
+ * @author smartloli.
+ * Created by Jan 17, 2017.
+ * Update by hexiang 20170216
  */
 public interface ClusterService {
 
-	/** Execute zookeeper comand interface */
-	public String execute(String clusterAlias, String cmd, String type);
+    /** 执行Zookeeper命令 */
+    String execute(String clusterAlias, String cmd, String type);
 
-	/** Get Kafka & KafkaConstants interface. */
-	public String get(String clusterAlias, String type);
+    /** Get Kafka & KafkaConstants interface. */
+    String get(String clusterAlias, String type);
 
-	/** Get Zookkeeper status interface. */
-	public JSONObject status(String clusterAlias);
+    /** Get Zookkeeper status interface. */
+    JSONObject status(String clusterAlias);
 
-	/** Get multi cluster aliass interface. */
-	public JSONArray clusterAliass();
+    /** Get multi cluster aliass interface. */
+    JSONArray clusterAliass();
 
 	/** Checked cluster alias is exist interface. */
-	public boolean hasClusterAlias(String clusterAlias);
+    boolean hasClusterAlias(String clusterAlias);
 
 }

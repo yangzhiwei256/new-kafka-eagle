@@ -19,6 +19,51 @@ import java.util.stream.Collectors;
 @Data
 public class KafkaClustersConfig {
 
+    /** 集群公共配置 **/
+    /**
+     * zookeeper最大连接数
+     **/
+    private Integer zkPoolMaxSize = 20;
+    /**
+     * 最小空闲连接数
+     **/
+    private Integer zkPoolMinIdle = 5;
+    /**
+     * 最大空闲连接数
+     **/
+    private Integer zkPoolMaxIdle = 10;
+    /**
+     * zookeeper连接超时
+     **/
+    private Integer ZkConnectTimeoutMs = 30000;
+    /**
+     * zookeeper 会话超时
+     **/
+    private Integer zkSessionTimeoutMs = 30000;
+    /**
+     * Kafka Client 最大连接数
+     **/
+    private Integer kafkaClientPoolMaxSize = 20;
+    /**
+     * kafka 客户端最小空闲连接数
+     **/
+    private Integer kafkaClientPoolMinIdle = 5;
+    /**
+     * kafka 客户端最大连接数
+     **/
+    private Integer kafkaClientPoolMaxIdle = 10;
+    /**
+     * kafka消息发送错误重试次数
+     **/
+    private Integer kafkaSendErrorRetry = 1;
+    /**
+     * kafka 消息请求超时时间
+     **/
+    private Integer kafkaRequestTimeoutMs = 10000;
+
+    /**
+     * 单个Kafka集群配置
+     **/
     private List<SingleClusterConfig> clusters;
 
     /**

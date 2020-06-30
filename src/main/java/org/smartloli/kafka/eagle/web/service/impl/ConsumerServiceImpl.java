@@ -38,7 +38,9 @@ import org.smartloli.kafka.eagle.web.protocol.TopicConsumerInfo;
 import org.smartloli.kafka.eagle.web.protocol.topic.TopicOffsetsInfo;
 import org.smartloli.kafka.eagle.web.service.ConsumerService;
 import org.smartloli.kafka.eagle.web.service.KafkaService;
-import org.smartloli.kafka.eagle.web.util.KafkaResourcePoolUtils;
+import org.smartloli.kafka.eagle.web.support.KafkaAdminClientTemplate;
+import org.smartloli.kafka.eagle.web.support.KafkaZkClientTemplate;
+import org.smartloli.kafka.eagle.web.support.OperationCallback;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -61,72 +63,73 @@ import java.util.Map.Entry;
 @Slf4j
 public class ConsumerServiceImpl implements ConsumerService {
 
-	@Autowired
-	private MBeanDao mbeanDao;
-
+    @Autowired
+    private MBeanDao mbeanDao;
     @Autowired
     private TopicDao topicDao;
-
     @Autowired
     private KafkaService kafkaService;
+    @Autowired
+    private KafkaZkClientTemplate kafkaZkClientTemplate;
+    @Autowired
+    private KafkaAdminClientTemplate kafkaAdminClientTemplate;
 
     @Override
     public Map<String, List<String>> getConsumers(String clusterAlias) {
-        KafkaZkClient kafkaZkClient = KafkaResourcePoolUtils.getZookeeperClient(clusterAlias);
-        Map<String, List<String>> consumers = new HashMap<>();
-        try {
-            Seq<String> subConsumerPaths = kafkaZkClient.getChildren(KafkaConstants.CONSUMERS_PATH);
-            List<String> groups = JavaConversions.seqAsJavaList(subConsumerPaths);
-            for (String group : groups) {
-                String path = KafkaConstants.CONSUMERS_PATH + "/" + group + "/owners";
-                if (kafkaZkClient.pathExists(path)) {
-                    Seq<String> owners = kafkaZkClient.getChildren(path);
-                    List<String> ownersSerialize = JavaConversions.seqAsJavaList(owners);
-                    consumers.put(group, ownersSerialize);
-                } else {
-                    log.error("Consumer Path[" + path + "] is not exist.");
+        return kafkaZkClientTemplate.doExecute(clusterAlias, new OperationCallback<KafkaZkClient, Map<String, List<String>>>() {
+            @Override
+            public Map<String, List<String>> execute(KafkaZkClient kafkaZkClient) {
+                Map<String, List<String>> consumers = new HashMap<>();
+                Seq<String> subConsumerPaths = kafkaZkClient.getChildren(KafkaConstants.CONSUMERS_PATH);
+                List<String> groups = JavaConversions.seqAsJavaList(subConsumerPaths);
+                for (String group : groups) {
+                    String path = KafkaConstants.CONSUMERS_PATH + "/" + group + "/owners";
+                    if (kafkaZkClient.pathExists(path)) {
+                        Seq<String> owners = kafkaZkClient.getChildren(path);
+                        List<String> ownersSerialize = JavaConversions.seqAsJavaList(owners);
+                        consumers.put(group, ownersSerialize);
+                    } else {
+                        log.error("Consumer Path[" + path + "] is not exist.");
+                    }
                 }
+                log.info("查询kafka集群[{}]消费者信息 ==> {}", clusterAlias, consumers);
+                return consumers;
             }
-            log.info("查询kafka集群[{}]消费者信息 ==> {}", clusterAlias, consumers);
-            return consumers;
-        } finally {
-            KafkaResourcePoolUtils.release(clusterAlias, kafkaZkClient);
-        }
+        });
     }
 
     /** Get kafka 0.10.x, 1.x, 2.x consumer metadata. */
     @Override
     public String getKafkaConsumer(String clusterAlias) {
-        JSONArray consumerGroups = new JSONArray();
-        AdminClient adminClient = KafkaResourcePoolUtils.getKafkaClient(clusterAlias);
-        try {
-            ListConsumerGroupsResult cgrs = adminClient.listConsumerGroups();
-            Collection<ConsumerGroupListing> consumerGroupListings = cgrs.all().get();
-            if (!CollectionUtils.isEmpty(consumerGroupListings)) {
-                for (ConsumerGroupListing consumerGroupListing : consumerGroupListings) {
-                    JSONObject consumerGroup = new JSONObject();
-                    String groupId = consumerGroupListing.groupId();
-                    DescribeConsumerGroupsResult descConsumerGroup = adminClient.describeConsumerGroups(Arrays.asList(groupId));
-                    if (!groupId.contains("kafka.eagle")) {
-                        consumerGroup.put("group", groupId);
-                        try {
-                            Node node = descConsumerGroup.all().get().get(groupId).coordinator();
-                            consumerGroup.put("node", node.host() + ":" + node.port());
-                        } catch (Exception e) {
-                            log.error("Get coordinator node has error, msg is " + e.getMessage());
-                            e.printStackTrace();
+        return kafkaAdminClientTemplate.doExecute(clusterAlias, adminClient -> {
+            JSONArray consumerGroups = new JSONArray();
+            try {
+                ListConsumerGroupsResult cgrs = adminClient.listConsumerGroups();
+                Collection<ConsumerGroupListing> consumerGroupListings = cgrs.all().get();
+                if (!CollectionUtils.isEmpty(consumerGroupListings)) {
+                    for (ConsumerGroupListing consumerGroupListing : consumerGroupListings) {
+                        JSONObject consumerGroup = new JSONObject();
+                        String groupId = consumerGroupListing.groupId();
+                        DescribeConsumerGroupsResult descConsumerGroup = adminClient.describeConsumerGroups(Arrays.asList(groupId));
+                        if (!groupId.contains("kafka.eagle")) {
+                            consumerGroup.put("group", groupId);
+                            try {
+                                Node node = descConsumerGroup.all().get().get(groupId).coordinator();
+                                consumerGroup.put("node", node.host() + ":" + node.port());
+                            } catch (Exception e) {
+                                log.error("Get coordinator node has error, msg is " + e.getMessage());
+                                e.printStackTrace();
+                            }
+                            consumerGroup.put("meta", kafkaService.getKafkaMetadata(clusterAlias, groupId));
+                            consumerGroups.add(consumerGroup);
                         }
-                        consumerGroup.put("meta", kafkaService.getKafkaMetadata(clusterAlias, groupId));
-                        consumerGroups.add(consumerGroup);
                     }
                 }
+            } catch (Exception e) {
+                log.error("Get kafka consumer has error", e);
             }
-        } catch (Exception e) {
-            log.error("Get kafka consumer has error", e);
-        } finally {
-            KafkaResourcePoolUtils.release(clusterAlias, adminClient);
-        }
-        return consumerGroups.toJSONString();
+            return consumerGroups.toJSONString();
+        });
     }
 
     /**
@@ -240,22 +243,25 @@ public class ConsumerServiceImpl implements ConsumerService {
     /** Get kafka 0.10.x, 1.x, 2.x consumer groups. */
     @Override
     public int getKafkaConsumerGroups(String clusterAlias) {
-        int counter = 0;
-        AdminClient adminClient = KafkaResourcePoolUtils.getKafkaClient(clusterAlias);
-        try {
-            Collection<ConsumerGroupListing> consumerGroupListingList = adminClient.listConsumerGroups().all().get();
-            for (ConsumerGroupListing consumerGroupListing : consumerGroupListingList) {
-                String groupId = consumerGroupListing.groupId();
-                if (!groupId.contains("kafka.eagle")) {
-                    counter++;
+        return kafkaAdminClientTemplate.doExecute(clusterAlias, new OperationCallback<AdminClient, Integer>() {
+            @Override
+            public Integer execute(AdminClient adminClient) {
+                int counter = 0;
+                try {
+                    Collection<ConsumerGroupListing> consumerGroupListingList = adminClient.listConsumerGroups().all().get();
+                    for (ConsumerGroupListing consumerGroupListing : consumerGroupListingList) {
+                        String groupId = consumerGroupListing.groupId();
+                        if (!groupId.contains("kafka.eagle")) {
+                            counter++;
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("Get kafka cluster [{}] consumer group has error ", clusterAlias, e);
                 }
+                return counter;
             }
-        } catch (Exception e) {
-            log.error("Get kafka cluster [{}] consumer group has error ", clusterAlias, e);
-        } finally {
-            KafkaResourcePoolUtils.release(clusterAlias, adminClient);
-        }
-        return counter;
+        });
+
     }
 
     /** Get kafka consumer & storage offset in kafka topic. */

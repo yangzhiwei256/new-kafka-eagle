@@ -21,37 +21,53 @@ import com.alibaba.fastjson.JSONObject;
 
 /**
  * ZkService operate comand and get metadata from zookeeper interface.
- * 
+ *
  * @author smartloli.
  *
  *         Created by Jan 18, 2017.
- * 
+ *
  *         Update by hexiang 20170216
  */
 public interface ZkService {
 
-	/** KafkaConstants delete command. */
-    String delete(String clusterAlias, String cmd);
+    /**
+     * Zookeeper 删除节点
+     */
+    Boolean delete(String clusterAlias, String cmd);
 
-	/** Find zookeeper leader node. */
+    /**
+     * Find zookeeper leader node.
+     */
     String findZkLeader(String clusterAlias);
 
-	/** KafkaConstants get command. */
+    /**
+     * 获取Zookeeper节点信息
+     */
     String get(String clusterAlias, String cmd);
 
-	/** KafkaConstants ls command. */
+    /**
+     * 列出Zookeeper节点
+     */
     String ls(String clusterAlias, String cmd);
 
-	/** Get zookeeper health status. */
+    /**
+     * 查询zookeeper健康状态
+     */
     String status(String host, String port);
 
-	/** Get zookeeper version. */
+    /**
+     * 获取Zookeeper版本
+     */
     String version(String host, String port);
 
-	/** Get zookeeper cluster information. */
+    /**
+     * 获取 zookeeper 集群信息
+     */
     String zkCluster(String clusterAlias);
 
-	/** Judge whether the zkcli is active. */
+    /**
+     * 判断ZkCli是否活跃
+     */
     JSONObject zkCliStatus(String clusterAlias);
 
 }

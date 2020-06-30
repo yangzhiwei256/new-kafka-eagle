@@ -22,23 +22,31 @@ import org.apache.kafka.clients.admin.ConfigEntry;
 
 /**
  * KafkaMetricsService to collect kafka performance kpi.
- * 
+ *
  * @author smartloli.
  *
  *         Created by Oct 26, 2018
  */
 public interface KafkaMetricsService {
 
-	/** Get topic size by jmx and convert unit, such TB, GB ,MB etc. */
+    /**
+     * Get topic size by jmx and convert unit, such TB, GB ,MB etc.
+     */
     JSONObject topicSize(String clusterAlias, String topic);
-	
-	/** Get topic size by adminclient and convert unit, such TB, GB ,MB etc. */
+
+    /**
+     * 获取kafka主题存储容量, such TB, GB ,MB etc.
+     */
     JSONObject topicKafkaCapacity(String clusterAlias, String topic);
 
-	/** Get topic size by jmx no convert . */
+    /**
+     * Get topic size by jmx no convert .
+     */
     long topicCapacity(String clusterAlias, String topic);
 
-	/** Change topic config property. */
+    /**
+     * 修改主题配置
+     */
     String changeTopicConfig(String clusterAlias, String topic, String type, ConfigEntry configEntry);
 
 }
