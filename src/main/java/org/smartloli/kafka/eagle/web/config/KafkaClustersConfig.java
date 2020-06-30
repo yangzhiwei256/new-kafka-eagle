@@ -62,6 +62,13 @@ public class KafkaClustersConfig {
     private Integer kafkaRequestTimeoutMs = 10000;
 
     /**
+     * KSQL自动修复：保证读取具有offset
+     * <p>
+     * auto.offset.reset:
+     ***/
+    private Boolean sqlFixError = false;
+
+    /**
      * 单个Kafka集群配置
      **/
     private List<SingleClusterConfig> clusters;

@@ -15,7 +15,7 @@ import org.smartloli.kafka.eagle.web.constant.KafkaConstants;
 
 import java.util.Properties;
 
-public class PooledKafkaProducerFactory extends BasePooledObjectFactory<KafkaProducer> {
+public class PooledKafkaProducerFactory extends BasePooledObjectFactory<KafkaProducer<String, String>> {
 
     /**
      * kafka集群节点列表
@@ -86,12 +86,12 @@ public class PooledKafkaProducerFactory extends BasePooledObjectFactory<KafkaPro
     }
 
     @Override
-    public PooledObject<KafkaProducer> wrap(KafkaProducer kafkaProducer) {
+    public PooledObject<KafkaProducer<String, String>> wrap(KafkaProducer<String, String> kafkaProducer) {
         return new DefaultPooledObject<>(kafkaProducer);
     }
 
     @Override
-    public void destroyObject(PooledObject<KafkaProducer> kafkaProducerPooledObject) {
+    public void destroyObject(PooledObject<KafkaProducer<String, String>> kafkaProducerPooledObject) {
         kafkaProducerPooledObject.getObject().close();
     }
 }

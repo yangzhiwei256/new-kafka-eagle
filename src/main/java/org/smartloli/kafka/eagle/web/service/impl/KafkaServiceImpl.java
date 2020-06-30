@@ -25,7 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
-import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
@@ -38,12 +37,9 @@ import org.smartloli.kafka.eagle.web.constant.OdpsSqlParser;
 import org.smartloli.kafka.eagle.web.protocol.*;
 import org.smartloli.kafka.eagle.web.service.KafkaService;
 import org.smartloli.kafka.eagle.web.service.ZkService;
-import org.smartloli.kafka.eagle.web.support.KafkaAdminClientTemplate;
-import org.smartloli.kafka.eagle.web.support.KafkaZkClientTemplate;
-import org.smartloli.kafka.eagle.web.support.OperationCallback;
+import org.smartloli.kafka.eagle.web.support.*;
 import org.smartloli.kafka.eagle.web.util.DateUtils;
 import org.smartloli.kafka.eagle.web.util.JMXFactoryUtils;
-import org.smartloli.kafka.eagle.web.util.KafkaResourcePoolUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -95,6 +91,10 @@ public class KafkaServiceImpl implements KafkaService {
     private KafkaZkClientTemplate kafkaZkClientTemplate;
     @Autowired
     private KafkaAdminClientTemplate kafkaAdminClientTemplate;
+    @Autowired
+    private KafkaConsumerTemplate kafkaConsumerTemplate;
+    @Autowired
+    private KafkaProducerTemplate kafkaProducerTemplate;
 
     @Override
     public boolean findTopicExistInGroup(String clusterAlias, String topic, String consumerGroup) {
@@ -721,91 +721,88 @@ public class KafkaServiceImpl implements KafkaService {
     /**
      * Get kafka 0.10.x topic history logsize.
      */
-    public long getKafkaLogSize(String clusterAlias, String topic, int partitionid) {
-        long histyLogSize = 0L;
-        KafkaConsumer<String, String> consumer = KafkaResourcePoolUtils.getKafkaConsumer(clusterAlias);
-        TopicPartition tp = new TopicPartition(topic, partitionid);
-        consumer.assign(Collections.singleton(tp));
-        java.util.Map<TopicPartition, Long> logsize = consumer.endOffsets(Collections.singleton(tp));
-        try {
-            histyLogSize = logsize.get(tp).longValue();
-        } catch (Exception e) {
-            log.error("Get history topic logsize has error, msg is " + e.getMessage());
-            e.printStackTrace();
-        } finally {
-            KafkaResourcePoolUtils.release(clusterAlias, consumer);
-        }
-        return histyLogSize;
+    @Override
+    public long getKafkaLogSize(String clusterAlias, String topic, int partitionId) {
+        return kafkaConsumerTemplate.doExecute(clusterAlias, kafkaConsumer -> {
+            long histyLogSize = 0L;
+            TopicPartition tp = new TopicPartition(topic, partitionId);
+            kafkaConsumer.assign(Collections.singleton(tp));
+            Map<TopicPartition, Long> logSize = kafkaConsumer.endOffsets(Collections.singleton(tp));
+            try {
+                histyLogSize = logSize.get(tp);
+            } catch (Exception e) {
+                log.error("Get history topic logsize has error", e);
+            }
+            return histyLogSize;
+        });
     }
 
     /**
      * Get kafka 0.10.x topic history logsize.
      */
+    @Override
     public Map<TopicPartition, Long> getKafkaLogSize(String clusterAlias, String topic, Set<Integer> partitionIds) {
-        KafkaConsumer<String, String> consumer = KafkaResourcePoolUtils.getKafkaConsumer(clusterAlias);
-        try {
+        return kafkaConsumerTemplate.doExecute(clusterAlias, kafkaConsumer -> {
             Set<TopicPartition> tps = new HashSet<>();
             for (int partitionId : partitionIds) {
                 TopicPartition topicPartition = new TopicPartition(topic, partitionId);
                 tps.add(topicPartition);
             }
-            consumer.assign(tps);
-            return consumer.endOffsets(tps);
-        } finally {
-            KafkaResourcePoolUtils.release(clusterAlias, consumer);
-        }
+            kafkaConsumer.assign(tps);
+            return kafkaConsumer.endOffsets(tps);
+        });
     }
 
     /**
      * Get kafka 0.10.x topic real logsize by partitionid.
      */
+    @Override
     public long getKafkaRealLogSize(String clusterAlias, String topic, int partitionId) {
-        long realLogSize = 0L;
-        KafkaConsumer<String, String> consumer = KafkaResourcePoolUtils.getKafkaConsumer(clusterAlias);
-        TopicPartition tp = new TopicPartition(topic, partitionId);
-        consumer.assign(Collections.singleton(tp));
-        java.util.Map<TopicPartition, Long> endLogSize = consumer.endOffsets(Collections.singleton(tp));
-        java.util.Map<TopicPartition, Long> startLogSize = consumer.beginningOffsets(Collections.singleton(tp));
-        try {
-            realLogSize = endLogSize.get(tp).longValue() - startLogSize.get(tp).longValue();
-        } catch (Exception e) {
-            log.error("Get real topic logSize by partition list has error", e);
-        } finally {
-            KafkaResourcePoolUtils.release(clusterAlias, consumer);
-        }
-        return realLogSize;
+        return kafkaConsumerTemplate.doExecute(clusterAlias, kafkaConsumer -> {
+            long realLogSize = 0L;
+            TopicPartition tp = new TopicPartition(topic, partitionId);
+            kafkaConsumer.assign(Collections.singleton(tp));
+            Map<TopicPartition, Long> endLogSize = kafkaConsumer.endOffsets(Collections.singleton(tp));
+            Map<TopicPartition, Long> startLogSize = kafkaConsumer.beginningOffsets(Collections.singleton(tp));
+            try {
+                realLogSize = endLogSize.get(tp) - startLogSize.get(tp);
+            } catch (Exception e) {
+                log.error("Get real topic logSize by partition list has error", e);
+            }
+            return realLogSize;
+        });
     }
 
     /**
      * Get kafka 0.10.x topic real logsize by partitionid set.
      */
+    @Override
     public long getKafkaRealLogSize(String clusterAlias, String topic, Set<Integer> partitionIds) {
-        long realLogSize = 0L;
-        KafkaConsumer<String, String> consumer = KafkaResourcePoolUtils.getKafkaConsumer(clusterAlias);
-        Set<TopicPartition> tps = new HashSet<>();
-        for (int partitionId : partitionIds) {
-            TopicPartition tp = new TopicPartition(topic, partitionId);
-            tps.add(tp);
-        }
-        consumer.assign(tps);
-        java.util.Map<TopicPartition, Long> endLogSize = consumer.endOffsets(tps);
-        java.util.Map<TopicPartition, Long> startLogSize = consumer.beginningOffsets(tps);
-        try {
-            long endSumLogSize = 0L;
-            long startSumLogSize = 0L;
-            for (Entry<TopicPartition, Long> entry : endLogSize.entrySet()) {
-                endSumLogSize += entry.getValue();
+        return kafkaConsumerTemplate.doExecute(clusterAlias, kafkaConsumer -> {
+            long realLogSize = 0L;
+            Set<TopicPartition> tps = new HashSet<>();
+            for (int partitionId : partitionIds) {
+                TopicPartition tp = new TopicPartition(topic, partitionId);
+                tps.add(tp);
             }
-            for (Entry<TopicPartition, Long> entry : startLogSize.entrySet()) {
-                startSumLogSize += entry.getValue();
+            kafkaConsumer.assign(tps);
+            Map<TopicPartition, Long> endLogSize = kafkaConsumer.endOffsets(tps);
+            Map<TopicPartition, Long> startLogSize = kafkaConsumer.beginningOffsets(tps);
+            try {
+                long endSumLogSize = 0L;
+                long startSumLogSize = 0L;
+                for (Entry<TopicPartition, Long> entry : endLogSize.entrySet()) {
+                    endSumLogSize += entry.getValue();
+                }
+                for (Entry<TopicPartition, Long> entry : startLogSize.entrySet()) {
+                    startSumLogSize += entry.getValue();
+                }
+                realLogSize = endSumLogSize - startSumLogSize;
+            } catch (Exception e) {
+                log.error("Get real topic logSize has error", e);
             }
-            realLogSize = endSumLogSize - startSumLogSize;
-        } catch (Exception e) {
-            log.error("Get real topic logSize has error", e);
-        } finally {
-            KafkaResourcePoolUtils.release(clusterAlias, consumer);
-        }
-        return realLogSize;
+            return realLogSize;
+        });
     }
 
     /**
@@ -813,25 +810,27 @@ public class KafkaServiceImpl implements KafkaService {
      */
     @Override
     public long getKafkaProducerLogSize(String clusterAlias, String topic, Set<Integer> partitionIds) {
-        long producerLogSize = 0L;
-        KafkaConsumer<String, String> consumer = KafkaResourcePoolUtils.getKafkaConsumer(clusterAlias);
-        try {
-            Set<TopicPartition> tps = new HashSet<>();
-            for (int partitionId : partitionIds) {
-                TopicPartition tp = new TopicPartition(topic, partitionId);
-                tps.add(tp);
+        return kafkaConsumerTemplate.doExecute(clusterAlias, new OperationCallback<KafkaConsumer<String, String>, Long>() {
+            @Override
+            public Long execute(KafkaConsumer<String, String> kafkaConsumer) {
+                long producerLogSize = 0L;
+                try {
+                    Set<TopicPartition> tps = new HashSet<>();
+                    for (int partitionId : partitionIds) {
+                        TopicPartition tp = new TopicPartition(topic, partitionId);
+                        tps.add(tp);
+                    }
+                    kafkaConsumer.assign(tps);
+                    Map<TopicPartition, Long> endLogSize = kafkaConsumer.endOffsets(tps);
+                    for (Entry<TopicPartition, Long> entry : endLogSize.entrySet()) {
+                        producerLogSize += entry.getValue();
+                    }
+                } catch (Exception e) {
+                    log.error("Get producer topic logsize has error", e);
+                }
+                return producerLogSize;
             }
-            consumer.assign(tps);
-            Map<TopicPartition, Long> endLogSize = consumer.endOffsets(tps);
-            for (Entry<TopicPartition, Long> entry : endLogSize.entrySet()) {
-                producerLogSize += entry.getValue();
-            }
-        } catch (Exception e) {
-            log.error("Get producer topic logsize has error", e);
-        } finally {
-            KafkaResourcePoolUtils.release(clusterAlias, consumer);
-        }
-        return producerLogSize;
+        });
     }
 
     /**
@@ -898,14 +897,12 @@ public class KafkaServiceImpl implements KafkaService {
     /**
      * Send mock message to kafka topic .
      */
+    @Override
     public boolean mockMessage(String clusterAlias, String topic, String message) {
-        Producer<String, String> producer = KafkaResourcePoolUtils.getKafkaProducer(clusterAlias);
-        try {
-            producer.send(new ProducerRecord<>(topic, new Date().getTime() + "", message));
-        } finally {
-            KafkaResourcePoolUtils.release(clusterAlias, producer);
-        }
-        return true;
+        return kafkaProducerTemplate.doExecute(clusterAlias, kafkaProducer -> {
+            kafkaProducer.send(new ProducerRecord<>(topic, new Date().getTime() + "", message));
+            return true;
+        });
     }
 
     /**

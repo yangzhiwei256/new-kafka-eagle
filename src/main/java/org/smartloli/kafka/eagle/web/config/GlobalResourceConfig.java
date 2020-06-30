@@ -8,14 +8,17 @@ import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.smartloli.kafka.eagle.web.constant.KafkaConstants;
 import org.smartloli.kafka.eagle.web.protocol.KafkaBrokerInfo;
 import org.smartloli.kafka.eagle.web.service.KafkaService;
-import org.smartloli.kafka.eagle.web.support.DatabaseTemplate;
-import org.smartloli.kafka.eagle.web.support.KafkaAdminClientTemplate;
-import org.smartloli.kafka.eagle.web.support.KafkaZkClientTemplate;
+import org.smartloli.kafka.eagle.web.support.*;
 import org.smartloli.kafka.eagle.web.support.factory.PooledKafkaClientFactory;
+import org.smartloli.kafka.eagle.web.support.factory.PooledKafkaConsumerFactory;
+import org.smartloli.kafka.eagle.web.support.factory.PooledKafkaProducerFactory;
 import org.smartloli.kafka.eagle.web.support.factory.PooledZookeeperFactory;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.context.annotation.Bean;
@@ -154,5 +157,128 @@ public class GlobalResourceConfig {
     @Bean
     public KafkaAdminClientTemplate adminClientTemplate(Map<String, GenericObjectPool<AdminClient>> adminClientGenericObjectPool) {
         return new KafkaAdminClientTemplate(adminClientGenericObjectPool);
+    }
+
+    /**
+     * Kafka消费者资源池
+     */
+    @Bean
+    public Map<String, GenericObjectPool<KafkaConsumer<String, String>>> kafkaConsumerGenericObjectPoolMap(KafkaClustersConfig kafkaClustersConfig,
+                                                                                                           KafkaService kafkaService) {
+        if (CollectionUtils.isEmpty(kafkaClustersConfig.getClusters())) {
+            throw new RuntimeException("Kafka集群配置为空,项目无法启动");
+        }
+        Map<String, List<KafkaBrokerInfo>> clusterBrokerInfoMap = kafkaService.getBrokerInfos(kafkaClustersConfig.getClusterAllAlias());
+        log.info("项目启动初始配置kafka集群Broker节点信息：{}", JSON.toJSONString(clusterBrokerInfoMap));
+
+        Map<String, GenericObjectPool<KafkaConsumer<String, String>>> kafkaConsumerPoolMap = new ConcurrentHashMap<>();
+        for (SingleClusterConfig singleClusterConfig : kafkaClustersConfig.getClusters()) {
+            GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
+            poolConfig.setMinIdle(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMinIdle()).orElse(kafkaClustersConfig.getKafkaClientPoolMinIdle()));
+            poolConfig.setMaxIdle(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxIdle()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxIdle()));
+            poolConfig.setMaxTotal(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxSize()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxSize()));
+            poolConfig.setTestOnBorrow(true);
+            poolConfig.setTestOnReturn(true);
+            poolConfig.setTestWhileIdle(true);
+            poolConfig.setLifo(true);
+            poolConfig.setBlockWhenExhausted(true);
+
+            String bootstrapServers = clusterBrokerInfoMap.get(singleClusterConfig.getAlias()).stream()
+                    .map(kafkaBrokerInfo -> kafkaBrokerInfo.getHost() + ":" + kafkaBrokerInfo.getPort()).collect(Collectors.joining(","));
+            Properties properties = new Properties();
+            if (singleClusterConfig.getSasl().getEnable()) {
+                properties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, singleClusterConfig.getSasl().getProtocol());
+                if (!StringUtils.isEmpty(singleClusterConfig.getSasl().getClientId())) {
+                    properties.put(CommonClientConfigs.CLIENT_ID_CONFIG, singleClusterConfig.getSasl().getClientId());
+                }
+                properties.put(SaslConfigs.SASL_MECHANISM, singleClusterConfig.getSasl().getMechanism());
+                properties.put(SaslConfigs.SASL_JAAS_CONFIG, singleClusterConfig.getSasl().getJaasConfig());
+            }
+
+            if (Optional.ofNullable(singleClusterConfig.getSqlFixError()).orElse(kafkaClustersConfig.getSqlFixError())) {
+                properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, KafkaConstants.EARLIEST);
+            }
+
+            PooledKafkaConsumerFactory factory = new PooledKafkaConsumerFactory(bootstrapServers,
+                    Optional.ofNullable(singleClusterConfig.getKafkaSendErrorRetry()).orElse(kafkaClustersConfig.getKafkaSendErrorRetry()),
+                    Optional.ofNullable(singleClusterConfig.getKafkaRequestTimeoutMs()).orElse(kafkaClustersConfig.getKafkaRequestTimeoutMs()),
+                    singleClusterConfig.getSasl().getEnable(), properties);
+            GenericObjectPool<KafkaConsumer<String, String>> genericObjectPool = new GenericObjectPool<>(factory, poolConfig);
+            kafkaConsumerPoolMap.put(singleClusterConfig.getAlias(), genericObjectPool);
+        }
+        return kafkaConsumerPoolMap;
+    }
+
+    /**
+     * Kafka Consumer 模板
+     *
+     * @param kafkaConsumerGenericObjectPoolMap
+     * @return
+     */
+    @Bean
+    public KafkaConsumerTemplate kafkaConsumerTemplate(Map<String, GenericObjectPool<KafkaConsumer<String, String>>> kafkaConsumerGenericObjectPoolMap) {
+        return new KafkaConsumerTemplate(kafkaConsumerGenericObjectPoolMap);
+    }
+
+    /**
+     * Kafak 生产者资源池
+     *
+     * @return
+     */
+    @Bean
+    public Map<String, GenericObjectPool<KafkaProducer<String, String>>> kafkaProducerPoolMap(KafkaClustersConfig kafkaClustersConfig,
+                                                                                              KafkaService kafkaService) {
+        if (CollectionUtils.isEmpty(kafkaClustersConfig.getClusters())) {
+            throw new RuntimeException("Kafka集群配置为空,项目无法启动");
+        }
+        Map<String, List<KafkaBrokerInfo>> clusterBrokerInfoMap = kafkaService.getBrokerInfos(kafkaClustersConfig.getClusterAllAlias());
+        log.info("项目启动初始配置kafka集群Broker节点信息：{}", JSON.toJSONString(clusterBrokerInfoMap));
+        Map<String, GenericObjectPool<KafkaProducer<String, String>>> kafkaProducerPoolMap = new ConcurrentHashMap<>();
+
+        for (SingleClusterConfig singleClusterConfig : kafkaClustersConfig.getClusters()) {
+            GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
+            poolConfig.setMinIdle(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMinIdle()).orElse(kafkaClustersConfig.getKafkaClientPoolMinIdle()));
+            poolConfig.setMaxIdle(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxIdle()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxIdle()));
+            poolConfig.setMaxTotal(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxSize()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxSize()));
+            poolConfig.setTestOnBorrow(true);
+            poolConfig.setTestOnReturn(true);
+            poolConfig.setTestWhileIdle(true);
+            poolConfig.setLifo(true);
+            poolConfig.setBlockWhenExhausted(true);
+
+            String bootstrapServers = clusterBrokerInfoMap.get(singleClusterConfig.getAlias()).stream()
+                    .map(kafkaBrokerInfo -> kafkaBrokerInfo.getHost() + ":" + kafkaBrokerInfo.getPort()).collect(Collectors.joining(","));
+
+            Properties properties = new Properties();
+            if (singleClusterConfig.getSasl().getEnable()) {
+                properties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, singleClusterConfig.getSasl().getProtocol());
+                if (!StringUtils.isEmpty(singleClusterConfig.getSasl().getClientId())) {
+                    properties.put(CommonClientConfigs.CLIENT_ID_CONFIG, singleClusterConfig.getSasl().getClientId());
+                }
+                properties.put(SaslConfigs.SASL_MECHANISM, singleClusterConfig.getSasl().getMechanism());
+                properties.put(SaslConfigs.SASL_JAAS_CONFIG, singleClusterConfig.getSasl().getJaasConfig());
+            }
+
+            if (Optional.ofNullable(singleClusterConfig.getSqlFixError()).orElse(kafkaClustersConfig.getSqlFixError())) {
+                properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, KafkaConstants.EARLIEST);
+            }
+
+            PooledKafkaProducerFactory factory = new PooledKafkaProducerFactory(bootstrapServers,
+                    Optional.ofNullable(singleClusterConfig.getKafkaSendErrorRetry()).orElse(kafkaClustersConfig.getKafkaSendErrorRetry()),
+                    Optional.ofNullable(singleClusterConfig.getKafkaRequestTimeoutMs()).orElse(kafkaClustersConfig.getKafkaRequestTimeoutMs()),
+                    singleClusterConfig.getSasl().getEnable(), properties);
+            GenericObjectPool<KafkaProducer<String, String>> genericObjectPool = new GenericObjectPool<>(factory, poolConfig);
+            kafkaProducerPoolMap.put(singleClusterConfig.getAlias(), genericObjectPool);
+        }
+        return kafkaProducerPoolMap;
+    }
+
+    /***
+     * kafka 生产者模板配置
+     * @return
+     */
+    @Bean
+    public KafkaProducerTemplate kafkaProducerTemplate(Map<String, GenericObjectPool<KafkaProducer<String, String>>> kafkaProducerPoolMap) {
+        return new KafkaProducerTemplate(kafkaProducerPoolMap);
     }
 }

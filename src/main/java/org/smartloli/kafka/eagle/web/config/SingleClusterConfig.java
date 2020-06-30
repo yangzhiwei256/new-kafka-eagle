@@ -77,4 +77,8 @@ public class SingleClusterConfig {
      * kafka 消息请求超时时间
      **/
     private Integer kafkaRequestTimeoutMs;
+    /**
+     * KSQL自动修复：保证读取具有offset
+     **/
+    private Boolean sqlFixError = false;
 }

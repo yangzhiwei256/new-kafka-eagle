@@ -13,7 +13,7 @@ import org.smartloli.kafka.eagle.web.constant.KafkaConstants;
 
 import java.util.Properties;
 
-public class PooledKafkaConsumerFactory extends BasePooledObjectFactory<KafkaConsumer> {
+public class PooledKafkaConsumerFactory extends BasePooledObjectFactory<KafkaConsumer<String, String>> {
 
     /**
      * kafka集群节点列表
@@ -80,12 +80,12 @@ public class PooledKafkaConsumerFactory extends BasePooledObjectFactory<KafkaCon
     }
 
     @Override
-    public PooledObject<KafkaConsumer> wrap(KafkaConsumer kafkaConsumer) {
+    public PooledObject<KafkaConsumer<String, String>> wrap(KafkaConsumer<String, String> kafkaConsumer) {
         return new DefaultPooledObject<>(kafkaConsumer);
     }
 
     @Override
-    public void destroyObject(PooledObject<KafkaConsumer> kafkaConsumerPooledObject) {
+    public void destroyObject(PooledObject<KafkaConsumer<String, String>> kafkaConsumerPooledObject) {
         kafkaConsumerPooledObject.getObject().close();
     }
 }

@@ -159,26 +159,40 @@ public interface KafkaService {
 	/** Get kafka topic real logsize by partitionid. */
 	long getKafkaRealLogSize(String clusterAlias, String topic, int partitionId);
 
-	/** Get kafka topic real logsize by partitionid set. */
-	long getKafkaRealLogSize(String clusterAlias, String topic, Set<Integer> partitionIds);
-	
-	/** Get topic producer send logsize records. */
-	long getKafkaProducerLogSize(String clusterAlias, String topic, Set<Integer> partitionIds);
+    /**
+     * Get kafka topic real logsize by partitionid set.
+     */
+    long getKafkaRealLogSize(String clusterAlias, String topic, Set<Integer> partitionIds);
 
-	/** Get kafka sasl topic metadate. */
-	List<MetadataInfo> findKafkaLeader(String clusterAlias, String topic);
+    /**
+     * Get topic producer send logsize records.
+     */
+    long getKafkaProducerLogSize(String clusterAlias, String topic, Set<Integer> partitionIds);
 
-	/** Send mock message to kafka. */
-	boolean mockMessage(String clusterAlias, String topic, String message);
+    /**
+     * Get kafka sasl topic metadate.
+     */
+    List<MetadataInfo> findKafkaLeader(String clusterAlias, String topic);
 
-	/** Get kafka consumer group all topics lag. */
-	long getKafkaLag(String clusterAlias, String group, String topic);
+    /**
+     * 发送kafka模拟消息
+     */
+    boolean mockMessage(String clusterAlias, String topic, String message);
 
-	/** Get consumer group all topics lag. */
-	long getLag(String clusterAlias, String group, String topic);
+    /**
+     * Get kafka consumer group all topics lag.
+     */
+    long getKafkaLag(String clusterAlias, String group, String topic);
 
-	/** Get kafka history logsize by old version. */
-	long getLogSize(String clusterAlias, String topic, int partitionid);
+    /**
+     * Get consumer group all topics lag.
+     */
+    long getLag(String clusterAlias, String group, String topic);
+
+    /**
+     * Get kafka history logsize by old version.
+     */
+    long getLogSize(String clusterAlias, String topic, int partitionid);
 
 	/** Get kafka history logsize by old version. */
 	long getLogSize(String clusterAlias, String topic, Set<Integer> partitionids);

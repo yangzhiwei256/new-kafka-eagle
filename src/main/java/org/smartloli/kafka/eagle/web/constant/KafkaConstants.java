@@ -12,7 +12,6 @@ public final class KafkaConstants {
 
     //kakfa eagle全局配置参数
     public static final String KAFKA_EAGLE_SQL_TOPIC_RECORDS_MAX = "kafka.eagle.sql.topic.records.max";
-    public static final String KAFKA_EAGLE_SQL_FIX_ERROR = "kafka.eagle.sql.fix.error";
     public static final String KAFKA_EAGLE_TOPIC_TOKEN = "kafka.eagle.topic.token";
     public static final String KAFKA_EAGLE_METRICS_CHARTS = "kafka.eagle.metrics.charts";
     public static final String KAFKA_EAGLE_METRICS_RETAIN = "kafka.eagle.metrics.retain";
@@ -80,14 +79,6 @@ public final class KafkaConstants {
     public static final String CLUSTER_ALIAS = "clusterAlias";
     public static final String CLUSTER_ALIAS_LIST = "clusterAliasList";
     public static final int CLUSTER_ALIAS_LIST_LIMIT = 5;
-
-    //Kafka Client 资源池配置
-    public static final String KAFKA_CLIENT_MAX_TOTAL = "kafka.client.max.total";
-    public static final String KAFKA_CLIENT_MIN_IDLE = "kafka.client.min.idle";
-    public static final String KAFKA_CLIENT_MAX_IDLE = "kafka.client.max.idle";
-    public static final String KAFKA_SEND_ERROR_RETRY = "kafka.send.error.retry";
-    public static final String KAFKA_REQUEST_TIMEOUT_MS = "kafka.request.timeout.ms";
-
 
     /**
      * kafka zookeeper资源池最大数量
