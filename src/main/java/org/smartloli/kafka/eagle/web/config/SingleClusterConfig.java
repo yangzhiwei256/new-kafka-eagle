@@ -80,5 +80,5 @@ public class SingleClusterConfig {
     /**
      * KSQL自动修复：保证读取具有offset
      **/
-    private Boolean sqlFixError = false;
+    private Boolean sqlFixError;
 }

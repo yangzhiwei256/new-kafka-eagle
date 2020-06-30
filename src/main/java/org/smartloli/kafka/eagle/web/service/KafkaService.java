@@ -170,7 +170,7 @@ public interface KafkaService {
     long getKafkaProducerLogSize(String clusterAlias, String topic, Set<Integer> partitionIds);
 
     /**
-     * Get kafka sasl topic metadate.
+     * 获取Kafka主题Leader 远点元数据
      */
     List<MetadataInfo> findKafkaLeader(String clusterAlias, String topic);
 
@@ -210,12 +210,12 @@ public interface KafkaService {
     String getTopicPartitionReplicas(String clusterAlias, String topic, int partitionId);
 
     /**
-     * Get kafka version.
+     * 获取KAFKA版本
      */
-    String getKafkaVersion(String host, int port, String ids, String clusterAlias);
+    String getKafkaVersion(String clusterAlias, KafkaBrokerInfo kafkaBrokerInfo, String ids);
 
     /**
      * Get kafka os memory.
      */
-    long getOSMemory(String host, int port, String property);
+    long getOSMemory(KafkaBrokerInfo kafkaBrokerInfo, String property);
 }

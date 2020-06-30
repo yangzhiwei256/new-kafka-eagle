@@ -27,10 +27,10 @@ import lombok.Data;
  * Created by Jul 14, 2017
  */
 @Data
-public class MBeanInfo  {
+public class MBeanInfo {
 
-    private String fifteenMinute;
-    private String fiveMinute;
-    private String meanRate;
-    private String oneMinute;
+    private String fifteenMinute = "0.0";
+    private String fiveMinute = "0.0";
+    private String meanRate = "0.0";
+    private String oneMinute = "0.0";
 }

@@ -64,8 +64,6 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class KafkaMetricsServiceImpl implements KafkaMetricsService {
 
-    private final String JMX = "service:jmx:rmi:///jndi/rmi://%s/jmxrmi";
-
     @Autowired
     private KafkaClustersConfig kafkaClustersConfig;
     @Autowired
@@ -130,10 +128,13 @@ public class KafkaMetricsServiceImpl implements KafkaMetricsService {
         long tpSize = 0L;
         for (MetadataInfo leader : leaders) {
             String jni = kafkaService.getBrokerJMXFromIds(clusterAlias, leader.getLeader());
-            jmx = String.format(JMX, jni);
+            jmx = String.format(KafkaConstants.JMX_URL_FORMAT, jni);
             try {
                 JMXServiceURL jmxSeriverUrl = new JMXServiceURL(jmx);
                 connector = JMXFactoryUtils.connectWithTimeout(jmxSeriverUrl, 30, TimeUnit.SECONDS);
+                if (null == connector) {
+                    return StrUtils.stringifyByObject(tpSize);
+                }
                 MBeanServerConnection mbeanConnection = connector.getMBeanServerConnection();
                 String objectName = String.format(KafkaLog.SIZE.getValue(), topic, leader.getPartitionId());
                 Object size = mbeanConnection.getAttribute(new ObjectName(objectName), KafkaLog.VALUE.getValue());
@@ -267,10 +268,13 @@ public class KafkaMetricsServiceImpl implements KafkaMetricsService {
         long tpSize = 0L;
         for (MetadataInfo leader : leaders) {
             String jni = kafkaService.getBrokerJMXFromIds(clusterAlias, leader.getLeader());
-            jmx = String.format(JMX, jni);
+            jmx = String.format(KafkaConstants.JMX_URL_FORMAT, jni);
             try {
-                JMXServiceURL jmxSeriverUrl = new JMXServiceURL(jmx);
-                connector = JMXFactoryUtils.connectWithTimeout(jmxSeriverUrl, 30, TimeUnit.SECONDS);
+                JMXServiceURL jmxServieUrl = new JMXServiceURL(jmx);
+                connector = JMXFactoryUtils.connectWithTimeout(jmxServieUrl, 30, TimeUnit.SECONDS);
+                if (null == connector) {
+                    return tpSize;
+                }
                 MBeanServerConnection mbeanConnection = connector.getMBeanServerConnection();
                 String objectName = String.format(KafkaLog.SIZE.getValue(), topic, leader.getPartitionId());
                 Object size = mbeanConnection.getAttribute(new ObjectName(objectName), KafkaLog.VALUE.getValue());

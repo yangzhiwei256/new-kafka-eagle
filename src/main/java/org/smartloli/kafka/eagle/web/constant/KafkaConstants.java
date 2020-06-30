@@ -106,4 +106,13 @@ public final class KafkaConstants {
     public static final String ZK_OUTSTANDING_REQUESTS = "zk_outstanding_requests";
     public static final String LEADER = "leader";
 
+    /**
+     * kafka未开启JMX功能，默认端口返回-1
+     **/
+    public static final Integer INVALID_JMX_PORT = -1;
+
+    /**
+     * KAFKA JMX 路径样式
+     **/
+    public static final String JMX_URL_FORMAT = "service:jmx:rmi:///jndi/rmi://%s/jmxrmi";
 }

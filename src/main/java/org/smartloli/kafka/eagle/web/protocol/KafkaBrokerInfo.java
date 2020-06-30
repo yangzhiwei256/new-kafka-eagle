@@ -49,14 +49,25 @@ public class KafkaBrokerInfo {
     @JSONField(format = DateUtils.DATA_FORMAT_YEAR_MON_DAY_HOUR_MIN_SEC)
     private Date modify;
 
-    /** JMX端口 **/
+    /**
+     * JMX端口
+     **/
     private int jmxPort;
 
-    /** 版本号 **/
+    /**
+     * 版本号
+     **/
     private String version;
 
-    /** 节点ID: /brokers/ids **/
+    /**
+     * 节点ID: /brokers/ids
+     **/
     private String ids;
+
+    /**
+     * kafka是否开启JMX功能(用于指标监控、版本获取)
+     */
+    private Boolean jmxEnabled = false;
 
     public String toString() {
         return JSON.toJSONString(this);

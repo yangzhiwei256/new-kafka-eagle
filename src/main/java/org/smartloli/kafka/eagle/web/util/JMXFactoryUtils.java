@@ -17,12 +17,18 @@
  */
 package org.smartloli.kafka.eagle.web.util;
 
+import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
+import org.smartloli.kafka.eagle.web.constant.KafkaConstants;
+import org.smartloli.kafka.eagle.web.protocol.KafkaBrokerInfo;
 
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
-import java.util.concurrent.*;
+import java.net.MalformedURLException;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manager jmx connector object && release.
@@ -34,28 +40,60 @@ import java.util.concurrent.*;
 @Slf4j
 public class JMXFactoryUtils {
 
-    private static final ThreadFactory daemonThreadFactory = new DaemonThreadFactory();
-
     private JMXFactoryUtils() {
 
     }
 
+    /**
+     * 获取JMXConnector
+     *
+     * @param kafkaBrokerInfo kafka代理节点信息
+     * @return
+     */
+    public static JMXConnector connectWithTimeout(KafkaBrokerInfo kafkaBrokerInfo) {
+        return connectWithTimeout(kafkaBrokerInfo, 30, TimeUnit.SECONDS);
+    }
+
+    /**
+     * 获取JMXConnector
+     *
+     * @param kafkaBrokerInfo kakka代理节点信息
+     * @param timeout
+     * @param unit
+     * @return
+     */
+    public static JMXConnector connectWithTimeout(KafkaBrokerInfo kafkaBrokerInfo, long timeout, TimeUnit unit) {
+        if (!kafkaBrokerInfo.getJmxEnabled()) {
+            return null;
+        }
+        try {
+            JMXServiceURL jmxServiceUrl = new JMXServiceURL(String.format(KafkaConstants.JMX_URL_FORMAT, kafkaBrokerInfo.getHost() + ":" + kafkaBrokerInfo.getJmxPort()));
+            return connectWithTimeout(jmxServiceUrl, timeout, unit);
+        } catch (MalformedURLException e) {
+            log.error("创建JMXServiceURL出错 kafkaBrokerInfo ==> {}", JSON.toJSONString(kafkaBrokerInfo));
+            return null;
+        }
+    }
+
+    /**
+     * 获取JMXConnector 利用阻塞队列实现超时处理
+     *
+     * @param url     服务地址
+     * @param timeout 超时
+     * @param unit    超时时间单位
+     * @return
+     */
     public static JMXConnector connectWithTimeout(final JMXServiceURL url, long timeout, TimeUnit unit) {
         final BlockingQueue<Object> blockQueue = new ArrayBlockingQueue<>(1);
-        ExecutorService executor = Executors.newSingleThreadExecutor(daemonThreadFactory);
-        executor.submit(new Runnable() {
-            public void run() {
-                try {
-                    JMXConnector connector = JMXConnectorFactory.connect(url);
-                    if (!blockQueue.offer(connector))
-                        connector.close();
-                } catch (Exception e) {
-                    if (!blockQueue.offer(e)) {
-                        log.error("Block queue is full", e);
-                    }
-                }
+        try {
+            JMXConnector connector = JMXConnectorFactory.connect(url);
+            if (!blockQueue.offer(connector)) {
+                connector.close();
             }
-        });
+        } catch (Exception e) {
+            log.error("获取JMXConnector失败,JMXServiceURL:{},timeout:{},unit:{}", url, timeout, unit.name(), e);
+            return null;
+        }
         Object result = null;
         try {
             result = blockQueue.poll(timeout, unit);
@@ -64,18 +102,7 @@ public class JMXFactoryUtils {
             }
         } catch (Exception e) {
             log.error("Take block queue has error", e);
-        } finally {
-            executor.shutdown();
         }
         return (JMXConnector) result;
     }
-
-    private static class DaemonThreadFactory implements ThreadFactory {
-        public Thread newThread(Runnable r) {
-            Thread t = Executors.defaultThreadFactory().newThread(r);
-            t.setDaemon(true);
-            return t;
-        }
-    }
-
 }

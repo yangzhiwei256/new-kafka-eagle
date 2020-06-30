@@ -153,30 +153,29 @@ public class MetricsServiceImpl implements MetricsService {
      * @return
      */
 	private String getOnlineAllBrokersMBean(List<KafkaBrokerInfo> brokers) {
-		Map<String, MBeanInfo> mbeanInfoMap = new HashMap<>();
-		for (KafkaBrokerInfo broker : brokers) {
-			String uri = broker.getHost() + ":" + broker.getJmxPort();
-			MBeanInfo bytesIn = mx4jService.bytesInPerSec(uri);
-			MBeanInfo bytesOut = mx4jService.bytesOutPerSec(uri);
-			MBeanInfo bytesRejected = mx4jService.bytesRejectedPerSec(uri);
-			MBeanInfo failedFetchRequest = mx4jService.failedFetchRequestsPerSec(uri);
-			MBeanInfo failedProduceRequest = mx4jService.failedProduceRequestsPerSec(uri);
-			MBeanInfo messageIn = mx4jService.messagesInPerSec(uri);
-			MBeanInfo produceMessageConversions = mx4jService.produceMessageConversionsPerSec(uri);
-			MBeanInfo totalFetchRequests = mx4jService.totalFetchRequestsPerSec(uri);
-			MBeanInfo totalProduceRequests = mx4jService.totalProduceRequestsPerSec(uri);
-			MBeanInfo replicationBytesInPerSec = mx4jService.replicationBytesInPerSec(uri);
-			MBeanInfo replicationBytesOutPerSec = mx4jService.replicationBytesOutPerSec(uri);
+        Map<String, MBeanInfo> mbeanInfoMap = new HashMap<>();
+        for (KafkaBrokerInfo kafkaBrokerInfo : brokers) {
+            MBeanInfo bytesIn = mx4jService.bytesInPerSec(kafkaBrokerInfo);
+            MBeanInfo bytesOut = mx4jService.bytesOutPerSec(kafkaBrokerInfo);
+            MBeanInfo bytesRejected = mx4jService.bytesRejectedPerSec(kafkaBrokerInfo);
+            MBeanInfo failedFetchRequest = mx4jService.failedFetchRequestsPerSec(kafkaBrokerInfo);
+            MBeanInfo failedProduceRequest = mx4jService.failedProduceRequestsPerSec(kafkaBrokerInfo);
+            MBeanInfo messageIn = mx4jService.messagesInPerSec(kafkaBrokerInfo);
+            MBeanInfo produceMessageConversions = mx4jService.produceMessageConversionsPerSec(kafkaBrokerInfo);
+            MBeanInfo totalFetchRequests = mx4jService.totalFetchRequestsPerSec(kafkaBrokerInfo);
+            MBeanInfo totalProduceRequests = mx4jService.totalProduceRequestsPerSec(kafkaBrokerInfo);
+            MBeanInfo replicationBytesInPerSec = mx4jService.replicationBytesInPerSec(kafkaBrokerInfo);
+            MBeanInfo replicationBytesOutPerSec = mx4jService.replicationBytesOutPerSec(kafkaBrokerInfo);
 
-			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.MESSAGES_IN, messageIn);
-			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.BYTES_IN, bytesIn);
-			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.BYTES_OUT, bytesOut);
-			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.BYTES_REJECTED, bytesRejected);
-			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.FAILED_FETCH_REQUEST, failedFetchRequest);
-			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.FAILED_PRODUCE_REQUEST, failedProduceRequest);
-			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.PRODUCEMESSAGECONVERSIONS, produceMessageConversions);
-			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.TOTALFETCHREQUESTSPERSEC, totalFetchRequests);
-			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.TOTALPRODUCEREQUESTSPERSEC, totalProduceRequests);
+            assembleMBeanInfo(mbeanInfoMap, MBeanConstants.MESSAGES_IN, messageIn);
+            assembleMBeanInfo(mbeanInfoMap, MBeanConstants.BYTES_IN, bytesIn);
+            assembleMBeanInfo(mbeanInfoMap, MBeanConstants.BYTES_OUT, bytesOut);
+            assembleMBeanInfo(mbeanInfoMap, MBeanConstants.BYTES_REJECTED, bytesRejected);
+            assembleMBeanInfo(mbeanInfoMap, MBeanConstants.FAILED_FETCH_REQUEST, failedFetchRequest);
+            assembleMBeanInfo(mbeanInfoMap, MBeanConstants.FAILED_PRODUCE_REQUEST, failedProduceRequest);
+            assembleMBeanInfo(mbeanInfoMap, MBeanConstants.PRODUCEMESSAGECONVERSIONS, produceMessageConversions);
+            assembleMBeanInfo(mbeanInfoMap, MBeanConstants.TOTALFETCHREQUESTSPERSEC, totalFetchRequests);
+            assembleMBeanInfo(mbeanInfoMap, MBeanConstants.TOTALPRODUCEREQUESTSPERSEC, totalProduceRequests);
 			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.REPLICATIONBYTESINPERSEC, replicationBytesInPerSec);
 			assembleMBeanInfo(mbeanInfoMap, MBeanConstants.REPLICATIONBYTESOUTPERSEC, replicationBytesOutPerSec);
 		}

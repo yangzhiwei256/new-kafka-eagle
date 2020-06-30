@@ -99,16 +99,19 @@ public class ClusterServiceImpl implements ClusterService {
 		return target;
 	}
 
-	/** Get kafka & zookeeper cluster information. */
-	public String get(String clusterAlias, String type) {
-		JSONObject target = new JSONObject();
-		if ("zk".equals(type)) {
-			String zkCluster = zkService.zkCluster(clusterAlias);
-			target.put("zk", JSON.parseArray(zkCluster));
-		} else if ("kafka".equals(type)) {
+	/**
+     * Get kafka & zookeeper cluster information.
+     */
+    @Override
+    public String get(String clusterAlias, String type) {
+        JSONObject target = new JSONObject();
+        if ("zk".equals(type)) {
+            String zkCluster = zkService.zkCluster(clusterAlias);
+            target.put("zk", JSON.parseArray(zkCluster));
+        } else if ("kafka".equals(type)) {
             List<KafkaBrokerInfo> kafkaBrokers = kafkaService.getBrokerInfos(clusterAlias);
             for (KafkaBrokerInfo broker : kafkaBrokers) {
-                String version = kafkaService.getKafkaVersion(broker.getHost(), broker.getJmxPort(), broker.getIds(), clusterAlias);
+                String version = kafkaService.getKafkaVersion(clusterAlias, broker, broker.getIds());
                 broker.setVersion(version);
             }
             target.put("kafka", JSON.parseArray(kafkaBrokers.toString()));
@@ -124,11 +127,14 @@ public class ClusterServiceImpl implements ClusterService {
             }
         }
 		return false;
-	}
+    }
 
-	/** Get KafkaConstants whether live. */
-	public JSONObject status(String clusterAlias) {
-		return zkService.zkCliStatus(clusterAlias);
+    /**
+     * Get KafkaConstants whether live.
+     */
+    @Override
+    public JSONObject status(String clusterAlias) {
+        return zkService.zkCliStatus(clusterAlias);
 	}
 
 }

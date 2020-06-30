@@ -20,6 +20,7 @@
  */
 package org.smartloli.kafka.eagle.web.service;
 
+import org.smartloli.kafka.eagle.web.protocol.KafkaBrokerInfo;
 import org.smartloli.kafka.eagle.web.protocol.MBeanInfo;
 
 import java.util.Map;
@@ -32,62 +33,84 @@ import java.util.Map;
  */
 public interface Mx4jService {
 
-	/** Get brokers all topics bytes in per sec. */
-    MBeanInfo bytesInPerSec(String uri);
+    /**
+     * Get brokers all topics bytes in per sec.
+     */
+    MBeanInfo bytesInPerSec(KafkaBrokerInfo kafkaBrokerInfo);
 
-	/** Get brokers bytes in per sec by topic. */
-    MBeanInfo bytesInPerSec(String uri, String topic);
+    /**
+     * Get brokers bytes in per sec by topic.
+     */
+    MBeanInfo bytesInPerSec(KafkaBrokerInfo kafkaBrokerInfo, String topic);
 
-	/** Get brokers all topics bytes out per sec. */
-    MBeanInfo bytesOutPerSec(String uri);
+    /**
+     * Get brokers all topics bytes out per sec.
+     */
+    MBeanInfo bytesOutPerSec(KafkaBrokerInfo kafkaBrokerInfo);
 
-	/** Get brokers bytes out per sec by topic. */
-    MBeanInfo bytesOutPerSec(String uri, String topic);
+    /**
+     * Get brokers bytes out per sec by topic.
+     */
+    MBeanInfo bytesOutPerSec(KafkaBrokerInfo kafkaBrokerInfo, String topic);
 
-	/** Get brokers all topics byte rejected per sec. */
-    MBeanInfo bytesRejectedPerSec(String uri);
+    /**
+     * Get brokers all topics byte rejected per sec.
+     */
+    MBeanInfo bytesRejectedPerSec(KafkaBrokerInfo kafkaBrokerInfo);
 
-	/** Get brokers byte rejected per sec by topic. */
-    MBeanInfo bytesRejectedPerSec(String uri, String topic);
+    /**
+     * Get brokers byte rejected per sec by topic.
+     */
+    MBeanInfo bytesRejectedPerSec(KafkaBrokerInfo kafkaBrokerInfo, String topic);
 
-	/** Get brokers all topic failed fetch request per sec. */
-    MBeanInfo failedFetchRequestsPerSec(String uri);
+    /**
+     * Get brokers all topic failed fetch request per sec.
+     */
+    MBeanInfo failedFetchRequestsPerSec(KafkaBrokerInfo kafkaBrokerInfo);
 
-	/** Get brokers failed fetch request per sec by topic. */
-    MBeanInfo failedFetchRequestsPerSec(String uri, String topic);
+    /**
+     * Get brokers failed fetch request per sec by topic.
+     */
+    MBeanInfo failedFetchRequestsPerSec(KafkaBrokerInfo kafkaBrokerInfo, String topic);
 
-	/** Get brokers all topics failed fetch produce request per sec. */
-    MBeanInfo failedProduceRequestsPerSec(String uri);
+    /** Get brokers all topics failed fetch produce request per sec. */
+    MBeanInfo failedProduceRequestsPerSec(KafkaBrokerInfo kafkaBrokerInfo);
 
-	/** Get brokers failed fetch produce request per sec by topic. */
-    MBeanInfo failedProduceRequestsPerSec(String uri, String topic);
+    /** Get brokers failed fetch produce request per sec by topic. */
+    MBeanInfo failedProduceRequestsPerSec(KafkaBrokerInfo kafkaBrokerInfo, String topic);
 
-	/** Get brokers topic all partitions log end offset. */
-    Map<Integer, Long> logEndOffset(String uri, String topic);
+    /**
+     * Get brokers topic all partitions log end offset.
+     */
+    Map<Integer, Long> logEndOffset(KafkaBrokerInfo kafkaBrokerInfo, String topic);
 
-	/** Get brokers all topics message in per sec. */
-    MBeanInfo messagesInPerSec(String uri);
+    /**
+     * Get brokers all topics message in per sec.
+     */
+    MBeanInfo messagesInPerSec(KafkaBrokerInfo kafkaBrokerInfo);
 
-	/** Get brokers message in per sec by topic. */
-    MBeanInfo messagesInPerSec(String uri, String topic);
+    /**
+     * Get brokers message in per sec by topic.
+     */
+    MBeanInfo messagesInPerSec(KafkaBrokerInfo kafkaBrokerInfo, String topic);
 
-	MBeanInfo produceMessageConversionsPerSec(String uri);
+    MBeanInfo produceMessageConversionsPerSec(KafkaBrokerInfo kafkaBrokerInfo);
 
-	MBeanInfo produceMessageConversionsPerSec(String uri, String topic);
+    MBeanInfo produceMessageConversionsPerSec(KafkaBrokerInfo kafkaBrokerInfo, String topic);
 
-	MBeanInfo totalFetchRequestsPerSec(String uri);
+    MBeanInfo totalFetchRequestsPerSec(KafkaBrokerInfo kafkaBrokerInfo);
 
-	MBeanInfo totalFetchRequestsPerSec(String uri, String topic);
+    MBeanInfo totalFetchRequestsPerSec(KafkaBrokerInfo kafkaBrokerInfo, String topic);
 
-	MBeanInfo totalProduceRequestsPerSec(String uri);
+    MBeanInfo totalProduceRequestsPerSec(KafkaBrokerInfo kafkaBrokerInfo);
 
-	MBeanInfo totalProduceRequestsPerSec(String uri, String topic);
+    MBeanInfo totalProduceRequestsPerSec(KafkaBrokerInfo kafkaBrokerInfo, String topic);
 
-	MBeanInfo replicationBytesInPerSec(String uri);
+    MBeanInfo replicationBytesInPerSec(KafkaBrokerInfo kafkaBrokerInfo);
 
-	MBeanInfo replicationBytesInPerSec(String uri, String topic);
+    MBeanInfo replicationBytesInPerSec(KafkaBrokerInfo kafkaBrokerInfo, String topic);
 
-	MBeanInfo replicationBytesOutPerSec(String uri);
+    MBeanInfo replicationBytesOutPerSec(KafkaBrokerInfo kafkaBrokerInfo);
 
-	MBeanInfo replicationBytesOutPerSec(String uri, String topic);
+	MBeanInfo replicationBytesOutPerSec(KafkaBrokerInfo kafkaBrokerInfo, String topic);
 }

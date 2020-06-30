@@ -249,25 +249,25 @@ public class TopicServiceImpl implements TopicService {
         Map<String, MBeanInfo> mbeans = new HashMap<>();
         for (KafkaBrokerInfo broker : brokers) {
             String uri = broker.getHost() + ":" + broker.getJmxPort();
-            MBeanInfo bytesIn = mx4jService.bytesInPerSec(uri, topic);
-            MBeanInfo bytesOut = mx4jService.bytesOutPerSec(uri, topic);
-            MBeanInfo bytesRejected = mx4jService.bytesRejectedPerSec(uri, topic);
-            MBeanInfo failedFetchRequest = mx4jService.failedFetchRequestsPerSec(uri, topic);
-            MBeanInfo failedProduceRequest = mx4jService.failedProduceRequestsPerSec(uri, topic);
-            MBeanInfo messageIn = mx4jService.messagesInPerSec(uri, topic);
-            MBeanInfo produceMessageConversions = mx4jService.produceMessageConversionsPerSec(uri, topic);
-			MBeanInfo totalFetchRequests = mx4jService.totalFetchRequestsPerSec(uri, topic);
-			MBeanInfo totalProduceRequests = mx4jService.totalProduceRequestsPerSec(uri, topic);
+            MBeanInfo bytesIn = mx4jService.bytesInPerSec(broker, topic);
+            MBeanInfo bytesOut = mx4jService.bytesOutPerSec(broker, topic);
+            MBeanInfo bytesRejected = mx4jService.bytesRejectedPerSec(broker, topic);
+            MBeanInfo failedFetchRequest = mx4jService.failedFetchRequestsPerSec(broker, topic);
+            MBeanInfo failedProduceRequest = mx4jService.failedProduceRequestsPerSec(broker, topic);
+            MBeanInfo messageIn = mx4jService.messagesInPerSec(broker, topic);
+            MBeanInfo produceMessageConversions = mx4jService.produceMessageConversionsPerSec(broker, topic);
+            MBeanInfo totalFetchRequests = mx4jService.totalFetchRequestsPerSec(broker, topic);
+            MBeanInfo totalProduceRequests = mx4jService.totalProduceRequestsPerSec(broker, topic);
 
-			assembleMBeanInfo(mbeans, MBeanConstants.MESSAGES_IN, messageIn);
-			assembleMBeanInfo(mbeans, MBeanConstants.BYTES_IN, bytesIn);
-			assembleMBeanInfo(mbeans, MBeanConstants.BYTES_OUT, bytesOut);
-			assembleMBeanInfo(mbeans, MBeanConstants.BYTES_REJECTED, bytesRejected);
-			assembleMBeanInfo(mbeans, MBeanConstants.FAILED_FETCH_REQUEST, failedFetchRequest);
-			assembleMBeanInfo(mbeans, MBeanConstants.FAILED_PRODUCE_REQUEST, failedProduceRequest);
-			assembleMBeanInfo(mbeans, MBeanConstants.PRODUCEMESSAGECONVERSIONS, produceMessageConversions);
-			assembleMBeanInfo(mbeans, MBeanConstants.TOTALFETCHREQUESTSPERSEC, totalFetchRequests);
-			assembleMBeanInfo(mbeans, MBeanConstants.TOTALPRODUCEREQUESTSPERSEC, totalProduceRequests);
+            assembleMBeanInfo(mbeans, MBeanConstants.MESSAGES_IN, messageIn);
+            assembleMBeanInfo(mbeans, MBeanConstants.BYTES_IN, bytesIn);
+            assembleMBeanInfo(mbeans, MBeanConstants.BYTES_OUT, bytesOut);
+            assembleMBeanInfo(mbeans, MBeanConstants.BYTES_REJECTED, bytesRejected);
+            assembleMBeanInfo(mbeans, MBeanConstants.FAILED_FETCH_REQUEST, failedFetchRequest);
+            assembleMBeanInfo(mbeans, MBeanConstants.FAILED_PRODUCE_REQUEST, failedProduceRequest);
+            assembleMBeanInfo(mbeans, MBeanConstants.PRODUCEMESSAGECONVERSIONS, produceMessageConversions);
+            assembleMBeanInfo(mbeans, MBeanConstants.TOTALFETCHREQUESTSPERSEC, totalFetchRequests);
+            assembleMBeanInfo(mbeans, MBeanConstants.TOTALPRODUCEREQUESTSPERSEC, totalProduceRequests);
 		}
 		for (Entry<String, MBeanInfo> entry : mbeans.entrySet()) {
 			if (entry == null || entry.getValue() == null) {
@@ -305,8 +305,11 @@ public class TopicServiceImpl implements TopicService {
 		}
 	}
 
-	/** Get topic logsize, topicsize from jmx data. */
-	public String getTopicSizeAndCapacity(String clusterAlias, String topic) {
+    /**
+     * Get topic logsize, topicsize from jmx data.
+     */
+    @Override
+    public String getTopicSizeAndCapacity(String clusterAlias, String topic) {
         JSONObject object = new JSONObject();
         long logSize = brokerService.getTopicRealLogSize(clusterAlias, topic);
         JSONObject topicSize;

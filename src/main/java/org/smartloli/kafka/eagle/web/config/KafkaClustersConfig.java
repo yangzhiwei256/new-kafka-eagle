@@ -65,7 +65,10 @@ public class KafkaClustersConfig {
      * KSQL自动修复：保证读取具有offset
      * <p>
      * auto.offset.reset:
-     ***/
+     * latest: 接收新数据，从新数据开始处理(默认)
+     * earliest: 若已提交offset则从最新的offset读取，否则从0开始读取
+     * none：主题分区Offset未提交offset则报错
+     **/
     private Boolean sqlFixError = false;
 
     /**
