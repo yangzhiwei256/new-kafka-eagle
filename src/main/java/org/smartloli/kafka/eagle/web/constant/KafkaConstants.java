@@ -1,6 +1,5 @@
 package org.smartloli.kafka.eagle.web.constant;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
@@ -11,7 +10,6 @@ public final class KafkaConstants {
 
 
     //kakfa eagle全局配置参数
-    public static final String KAFKA_EAGLE_SQL_TOPIC_RECORDS_MAX = "kafka.eagle.sql.topic.records.max";
     public static final String KAFKA_EAGLE_TOPIC_TOKEN = "kafka.eagle.topic.token";
     public static final String KAFKA_EAGLE_METRICS_CHARTS = "kafka.eagle.metrics.charts";
     public static final String KAFKA_EAGLE_METRICS_RETAIN = "kafka.eagle.metrics.retain";
@@ -89,9 +87,6 @@ public final class KafkaConstants {
     public static final String CONSUMERS_PATH = "/consumers";
     public static final String OWNERS = "/owners";
     public static final String TOPIC_ISR = "/brokers/topics/%s/partitions/%s/state";
-
-    @Value("${" + KAFKA_EAGLE_SQL_TOPIC_RECORDS_MAX + ":5000}")
-    public static Long POSITION;
 
     //Wechat
     public static final String TOUSER = "@all";

@@ -72,6 +72,11 @@ public class KafkaClustersConfig {
     private Boolean sqlFixError = false;
 
     /**
+     * KSQL最大常洵记录数
+     **/
+    private Long sqlTopicRecordsMax = 5000L;
+
+    /**
      * 单个Kafka集群配置
      **/
     private List<SingleClusterConfig> clusters;

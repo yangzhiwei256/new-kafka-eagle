@@ -22,6 +22,7 @@ import com.alibaba.fastjson.JSONObject;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.TopicPartition;
+import org.smartloli.kafka.eagle.web.config.KafkaClustersConfig;
 import org.smartloli.kafka.eagle.web.constant.KafkaConstants;
 import org.smartloli.kafka.eagle.web.protocol.KafkaSqlInfo;
 import org.smartloli.kafka.eagle.web.sql.schema.TopicSchema;
@@ -48,6 +49,8 @@ public class KafkaConsumerAdapter {
 
     @Autowired
     private KafkaConsumerTemplate kafkaConsumerTemplate;
+    @Autowired
+    private KafkaClustersConfig kafkaClustersConfig;
 
     /**
      * Executor ksql query topic data.
@@ -64,8 +67,8 @@ public class KafkaConsumerAdapter {
 
             for (TopicPartition tp : topics) {
                 Map<TopicPartition, Long> offsets = kafkaConsumer.endOffsets(Collections.singleton(tp));
-                if (offsets.get(tp) > KafkaConstants.POSITION) {
-                    kafkaConsumer.seek(tp, offsets.get(tp) - KafkaConstants.POSITION);
+                if (offsets.get(tp) > kafkaClustersConfig.getSqlTopicRecordsMax()) {
+                    kafkaConsumer.seek(tp, offsets.get(tp) - kafkaClustersConfig.getSqlTopicRecordsMax());
                 } else {
                     kafkaConsumer.seek(tp, 0);
                 }
