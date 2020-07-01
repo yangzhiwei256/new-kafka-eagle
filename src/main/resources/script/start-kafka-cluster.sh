@@ -1,8 +1,9 @@
 #!/bin/bash
 # kafka cluster bootstrap script
-# acquire Old kafka Cluster Pids
 # Notices: when script execute error, please open it whit 'vim -b filename', avoid special characters
 # replace special character: sed -i 's/^M//g' start-kafka-cluster.sh
+
+# acquire Old kafka Cluster Pids
 pids=`jps | grep Kafka | cut -d ' ' -f 1`
 for pid in $pids;
 do
