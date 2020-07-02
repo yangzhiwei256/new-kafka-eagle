@@ -60,11 +60,14 @@ function bootstrapSingleNode() {
     ## server.id config
     for i in `seq $index`
     do
-        nodeConfigPath="${ZOOKEEPER_CLUSTER_DIR}/node${i}/${SERVER_SAMPLE_FILE_NAME}"
-        result=`grep "server.${index}" $nodeConfigPath | head -n 1`
-        if [ -x $result ]; then
-          echo "server.${index}=`hostname`:${ZOOKEEPER_NODE_SELECTION_PORT_PREFIX}${index}:${ZOOKEEPER_NODE_COMMUNICATION_PORT_PREFIX}${index}" >> $nodeConfigPath
-        fi
+        for j in `seq $index`
+        do
+          nodeConfigPath="${ZOOKEEPER_CLUSTER_DIR}/node${j}/${SERVER_SAMPLE_FILE_NAME}"
+          result=`grep "server.${i}" $nodeConfigPath | head -n 1`
+          if [ -x $result ]; then
+            echo "server.${i}=`hostname`:${ZOOKEEPER_NODE_SELECTION_PORT_PREFIX}${i}:${ZOOKEEPER_NODE_COMMUNICATION_PORT_PREFIX}${i}" >> $nodeConfigPath
+          fi
+        done
     done
 
     ## 节点配置
@@ -73,7 +76,7 @@ function bootstrapSingleNode() {
     echo "===> finish bootstrap zookeeper ${index} node"
 }
 
-for ((i=1; i<=$ZOOKEEPER_NUM; i++))
+for i in `seq $ZOOKEEPER_NUM`
 do
 	bootstrapSingleNode $i
 done
