@@ -19,7 +19,7 @@ echo 'begin to start kafka node'
 # kafka Cluster Config Dir
 KAFKA_HOME=/data/apps/kafka_2.13-2.5.0
 KAFKA_CLUSTER_DIR=/tmp/kafka/cluster
-ZOOKEEPER_SERVER=172.25.87.200:2181,172.25.87.200:2182,172.25.87.200:2183
+ZOOKEEPER_SERVER=debian:2181,debian:2182:debian:2183
 
 # kafka node numbers
 KAFKA_NODE_NUM=3

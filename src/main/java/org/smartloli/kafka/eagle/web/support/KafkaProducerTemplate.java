@@ -47,9 +47,9 @@ public class KafkaProducerTemplate implements ResourceManage<String, KafkaProduc
 
     @Override
     public void release(String kafkaClusterName, KafkaProducer<String, String> kafkaProducer) {
-        GenericObjectPool<KafkaProducer<String, String>> producerGenericObjectPool = kafkaProducerPoolMap.get(kafkaClusterName);
-        if (producerGenericObjectPool != null) {
-            producerGenericObjectPool.returnObject(kafkaProducer);
+        if (null == kafkaProducerPoolMap.get(kafkaClusterName) || null == kafkaProducer) {
+            return;
         }
+        kafkaProducerPoolMap.get(kafkaClusterName).returnObject(kafkaProducer);
     }
 }

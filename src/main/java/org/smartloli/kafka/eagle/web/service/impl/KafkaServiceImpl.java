@@ -39,7 +39,6 @@ import org.smartloli.kafka.eagle.web.service.KafkaService;
 import org.smartloli.kafka.eagle.web.service.ZkService;
 import org.smartloli.kafka.eagle.web.support.*;
 import org.smartloli.kafka.eagle.web.util.DateUtils;
-import org.smartloli.kafka.eagle.web.util.JMXFactoryUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -48,8 +47,7 @@ import scala.Tuple2;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
-import javax.management.MBeanServerConnection;
-import javax.management.ObjectName;
+import javax.management.*;
 import javax.management.remote.JMXConnector;
 import java.io.IOException;
 import java.util.*;
@@ -93,6 +91,8 @@ public class KafkaServiceImpl implements KafkaService {
     private KafkaConsumerTemplate kafkaConsumerTemplate;
     @Autowired
     private KafkaProducerTemplate kafkaProducerTemplate;
+    @Autowired
+    private JMXConnectorTemplate jmxConnectorTemplate;
 
     @Override
     public boolean findTopicExistInGroup(String clusterAlias, String topic, String consumerGroup) {
@@ -837,31 +837,20 @@ public class KafkaServiceImpl implements KafkaService {
      */
     @Override
     public String getKafkaVersion(String clusterAlias, KafkaBrokerInfo kafkaBrokerInfo, String ids) {
-        String version = "-";
-        JMXConnector connector = null;
-        try {
-            connector = JMXFactoryUtils.connectWithTimeout(kafkaBrokerInfo);
-            if (null == connector) {
-                return version;
-            }
-            MBeanServerConnection mbeanConnection = connector.getMBeanServerConnection();
-            if (KafkaConstants.KAFKA.equals(kafkaClustersConfig.getClusterConfigByName(clusterAlias).getOffsetStorage())) {
-                version = mbeanConnection.getAttribute(new ObjectName(String.format(BrokerServer.BROKER_VERSION.getValue(), ids)), BrokerServer.BROKER_VERSION_VALUE.getValue()).toString();
-            } else {
-                version = mbeanConnection.getAttribute(new ObjectName(KafkaServer8.VERSION.getValue()), KafkaServer8.VALUE.getValue()).toString();
-            }
-        } catch (Exception ex) {
-            log.error("Get kafka version from jmx has error", ex);
-        } finally {
-            if (connector != null) {
-                try {
-                    connector.close();
-                } catch (IOException e) {
-                    log.error("Close jmx connector has error", e);
+        return jmxConnectorTemplate.doExecute(kafkaBrokerInfo.getJmxCacheKey(), jmxConnector -> {
+            String version = "-";
+            try {
+                MBeanServerConnection mbeanConnection = jmxConnector.getMBeanServerConnection();
+                if (KafkaConstants.KAFKA.equals(kafkaClustersConfig.getClusterConfigByName(clusterAlias).getOffsetStorage())) {
+                    version = mbeanConnection.getAttribute(new ObjectName(String.format(BrokerServer.BROKER_VERSION.getValue(), ids)), BrokerServer.BROKER_VERSION_VALUE.getValue()).toString();
+                } else {
+                    version = mbeanConnection.getAttribute(new ObjectName(KafkaServer8.VERSION.getValue()), KafkaServer8.VALUE.getValue()).toString();
                 }
+            } catch (IOException | MalformedObjectNameException | MBeanException | AttributeNotFoundException | InstanceNotFoundException | ReflectionException e) {
+                log.error("获取Kafka版本号出错,Broker ==> {}", JSON.toJSONString(kafkaBrokerInfo), e);
             }
-        }
-        return version;
+            return version;
+        });
     }
 
     @Override
@@ -947,42 +936,30 @@ public class KafkaServiceImpl implements KafkaService {
      * Get kafka old version topic history logsize.
      */
     @Override
-    public long getLogSize(String clusterAlias, String topic, int partitionid) {
-        JMXConnector connector = null;
-        String JMX = "service:jmx:rmi:///jndi/rmi://%s/jmxrmi";
+    public long getLogSize(String clusterAlias, String topic, int partitionId) {
+        JMXConnector jmxConnector = null;
+        KafkaBrokerInfo realKafkaBrokerInfo = null;
         List<KafkaBrokerInfo> kafkaBrokerInfos = getBrokerInfos(clusterAlias);
         for (KafkaBrokerInfo kafkaBrokerInfo : kafkaBrokerInfos) {
-            try {
-                connector = JMXFactoryUtils.connectWithTimeout(kafkaBrokerInfo);
-                if (connector != null) {
-                    break;
-                }
-            } catch (Exception e) {
-                log.error("Get kafka old version logSize has error", e);
+            jmxConnector = jmxConnectorTemplate.acquire(kafkaBrokerInfo.getJmxCacheKey());
+            if (jmxConnector != null) {
+                realKafkaBrokerInfo = kafkaBrokerInfo;
+                break;
             }
         }
-
-        if (null == connector) {
+        if (null == jmxConnector) {
             return 0L;
         }
 
-        long logSize = 0L;
         try {
-            MBeanServerConnection mbeanConnection = connector.getMBeanServerConnection();
-            logSize = Long.parseLong(mbeanConnection.getAttribute(new ObjectName(String.format(KafkaServer8.END_LOG_SIZE.getValue(), topic, partitionid)), KafkaServer8.VALUE.getValue()).toString());
+            MBeanServerConnection mbeanConnection = jmxConnector.getMBeanServerConnection();
+            return Long.parseLong(mbeanConnection.getAttribute(new ObjectName(String.format(KafkaServer8.END_LOG_SIZE.getValue(), topic, partitionId)), KafkaServer8.VALUE.getValue()).toString());
         } catch (Exception ex) {
-            log.error("Get kafka old version logsize & parse has error, msg is " + ex.getMessage());
+            log.error("Get kafka old version logSize & parse has error", ex);
+            return 0L;
         } finally {
-            if (connector != null) {
-                try {
-                    connector.close();
-                } catch (IOException e) {
-                    log.error("Close jmx connector has error, msg is " + e.getMessage());
-                    e.printStackTrace();
-                }
-            }
+            jmxConnectorTemplate.release(realKafkaBrokerInfo.getJmxCacheKey(), jmxConnector);
         }
-        return logSize;
     }
 
     /**
@@ -990,38 +967,34 @@ public class KafkaServiceImpl implements KafkaService {
      */
     @Override
     public long getLogSize(String clusterAlias, String topic, Set<Integer> partitionIds) {
-        JMXConnector connector = null;
-        List<KafkaBrokerInfo> brokers = getBrokerInfos(clusterAlias);
-        for (KafkaBrokerInfo broker : brokers) {
+        JMXConnector jmxConnector = null;
+        KafkaBrokerInfo realKafkaBrokerInfo = null;
+        List<KafkaBrokerInfo> kafkaBrokerInfoList = getBrokerInfos(clusterAlias);
+        for (KafkaBrokerInfo kafkaBrokerInfo : kafkaBrokerInfoList) {
             try {
-                connector = JMXFactoryUtils.connectWithTimeout(broker);
-                if (connector != null) {
+                jmxConnector = jmxConnectorTemplate.acquire(kafkaBrokerInfo.getJmxCacheKey());
+                if (jmxConnector != null) {
+                    realKafkaBrokerInfo = kafkaBrokerInfo;
                     break;
                 }
             } catch (Exception e) {
                 log.error("Get kafka old version logsize has error", e);
             }
         }
-        long logSize = 0L;
-        if (null == connector) {
-            return logSize;
+        if (null == jmxConnector) {
+            return 0L;
         }
 
+        long logSize = 0L;
         try {
-            MBeanServerConnection mbeanConnection = connector.getMBeanServerConnection();
+            MBeanServerConnection mbeanConnection = jmxConnector.getMBeanServerConnection();
             for (int partitionId : partitionIds) {
                 logSize += Long.parseLong(mbeanConnection.getAttribute(new ObjectName(String.format(KafkaServer8.END_LOG_SIZE.getValue(), topic, partitionId)), KafkaServer8.VALUE.getValue()).toString());
             }
         } catch (Exception ex) {
             log.error("Get kafka old version logsize & parse has error", ex);
         } finally {
-            if (connector != null) {
-                try {
-                    connector.close();
-                } catch (IOException e) {
-                    log.error("Close jmx connector has error", e);
-                }
-            }
+            jmxConnectorTemplate.release(realKafkaBrokerInfo.getJmxCacheKey(), jmxConnector);
         }
         return logSize;
     }
@@ -1029,39 +1002,37 @@ public class KafkaServiceImpl implements KafkaService {
     /**
      * Get kafka old version real topic logsize.
      */
-    public long getRealLogSize(String clusterAlias, String topic, int partitionid) {
-        JMXConnector connector = null;
-        String JMX = "service:jmx:rmi:///jndi/rmi://%s/jmxrmi";
+    @Override
+    public long getRealLogSize(String clusterAlias, String topic, int partitionId) {
+        JMXConnector jmxConnector = null;
+        KafkaBrokerInfo realKafkaBrokerInfo = null;
         List<KafkaBrokerInfo> brokers = getBrokerInfos(clusterAlias);
         for (KafkaBrokerInfo broker : brokers) {
             try {
-                connector = JMXFactoryUtils.connectWithTimeout(broker);
-                if (connector != null) {
+                jmxConnector = jmxConnectorTemplate.acquire(broker.getJmxCacheKey());
+                if (jmxConnector != null) {
+                    realKafkaBrokerInfo = broker;
                     break;
                 }
             } catch (Exception e) {
-                log.error("Get kafka old version logsize has error, msg is " + e.getMessage());
-                e.printStackTrace();
+                log.error("Get kafka old version logsize has error", e);
             }
         }
+
+        if (null == jmxConnector) {
+            return 0L;
+        }
+
         long logSize = 0L;
         try {
-            MBeanServerConnection mbeanConnection = connector.getMBeanServerConnection();
-            long endLogSize = Long.parseLong(mbeanConnection.getAttribute(new ObjectName(String.format(KafkaServer8.END_LOG_SIZE.getValue(), topic, partitionid)), KafkaServer8.VALUE.getValue()).toString());
-            long startLogSize = Long.parseLong(mbeanConnection.getAttribute(new ObjectName(String.format(KafkaServer8.START_LOG_SIZE.getValue(), topic, partitionid)), KafkaServer8.VALUE.getValue()).toString());
+            MBeanServerConnection mbeanConnection = jmxConnector.getMBeanServerConnection();
+            long endLogSize = Long.parseLong(mbeanConnection.getAttribute(new ObjectName(String.format(KafkaServer8.END_LOG_SIZE.getValue(), topic, partitionId)), KafkaServer8.VALUE.getValue()).toString());
+            long startLogSize = Long.parseLong(mbeanConnection.getAttribute(new ObjectName(String.format(KafkaServer8.START_LOG_SIZE.getValue(), topic, partitionId)), KafkaServer8.VALUE.getValue()).toString());
             logSize = endLogSize - startLogSize;
         } catch (Exception ex) {
-            log.error("Get kafka old version logsize & parse has error, msg is " + ex.getMessage());
-            ex.printStackTrace();
+            log.error("Get kafka old version logsize & parse has error", ex);
         } finally {
-            if (connector != null) {
-                try {
-                    connector.close();
-                } catch (IOException e) {
-                    log.error("Close jmx connector has error, msg is " + e.getMessage());
-                    e.printStackTrace();
-                }
-            }
+            jmxConnectorTemplate.release(realKafkaBrokerInfo.getJmxCacheKey(), jmxConnector);
         }
         return logSize;
     }
@@ -1098,28 +1069,19 @@ public class KafkaServiceImpl implements KafkaService {
     /**
      * Get kafka os memory.
      */
+    @Override
     public long getOSMemory(KafkaBrokerInfo kafkaBrokerInfo, String property) {
-        JMXConnector connector = null;
-        long memory = 0L;
-        try {
-            connector = JMXFactoryUtils.connectWithTimeout(kafkaBrokerInfo);
-            if (null == connector) {
-                return memory;
+        return jmxConnectorTemplate.doExecute(kafkaBrokerInfo.getJmxCacheKey(), jmxConnector -> {
+            long memory = 0L;
+            try {
+                MBeanServerConnection mbeanConnection = jmxConnector.getMBeanServerConnection();
+                String memorySize = mbeanConnection.getAttribute(
+                        new ObjectName(BrokerServer.JMX_PERFORMANCE_TYPE.getValue()), property).toString();
+                memory = Long.parseLong(memorySize);
+            } catch (Exception ex) {
+                log.error("Get kafka os memory from jmx has error", ex);
             }
-            MBeanServerConnection mbeanConnection = connector.getMBeanServerConnection();
-            String memorySize = mbeanConnection.getAttribute(new ObjectName(BrokerServer.JMX_PERFORMANCE_TYPE.getValue()), property).toString();
-            memory = Long.parseLong(memorySize);
-        } catch (Exception ex) {
-            log.error("Get kafka os memory from jmx has error, msg is " + ex.getMessage());
-        } finally {
-            if (connector != null) {
-                try {
-                    connector.close();
-                } catch (IOException e) {
-                    log.error("Close kafka os memory jmx connector has error, msg is " + e.getMessage());
-                }
-            }
-        }
-        return memory;
+            return memory;
+        });
     }
 }

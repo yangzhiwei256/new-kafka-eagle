@@ -40,6 +40,12 @@ public class KafkaClustersConfig {
      * zookeeper 会话超时
      **/
     private Integer zkSessionTimeoutMs = 30000;
+
+    /**
+     * 资源池获取最长等待时间
+     **/
+    private Integer zkMaxWaitMs = 10000;
+
     /**
      * Kafka Client 最大连接数
      **/
@@ -52,6 +58,10 @@ public class KafkaClustersConfig {
      * kafka 客户端最大连接数
      **/
     private Integer kafkaClientPoolMaxIdle = 10;
+    /**
+     * 资源池获取最长等待时间
+     **/
+    private Integer kafkaClientMaxWaitMs = 10000;
     /**
      * kafka消息发送错误重试次数
      **/

@@ -52,9 +52,9 @@ public class KafkaConsumerTemplate implements ResourceManage<String, KafkaConsum
 
     @Override
     public void release(String kafkaClusterName, KafkaConsumer<String, String> kafkaConsumer) {
-        GenericObjectPool<KafkaConsumer<String, String>> kafkaConsumerGenericObjectPool = kafkaConsumerGenericObjectPoolMap.get(kafkaClusterName);
-        if (kafkaConsumerGenericObjectPool != null) {
-            kafkaConsumerGenericObjectPool.returnObject(kafkaConsumer);
+        if (null == kafkaConsumerGenericObjectPoolMap.get(kafkaClusterName) || null == kafkaConsumer) {
+            return;
         }
+        kafkaConsumerGenericObjectPoolMap.get(kafkaClusterName).returnObject(kafkaConsumer);
     }
 }

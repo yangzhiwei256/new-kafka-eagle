@@ -54,9 +54,9 @@ public class KafkaAdminClientTemplate implements ResourceManage<String, AdminCli
 
     @Override
     public void release(String kafkaClusterName, AdminClient adminClient) {
-        GenericObjectPool<AdminClient> adminClientGenericObjectPool = kafkaClusterPoolMap.get(kafkaClusterName);
-        if (adminClientGenericObjectPool != null) {
-            adminClientGenericObjectPool.returnObject(adminClient);
+        if (null == kafkaClusterPoolMap.get(kafkaClusterName) || null == adminClient) {
+            return;
         }
+        kafkaClusterPoolMap.get(kafkaClusterName).returnObject(adminClient);
     }
 }

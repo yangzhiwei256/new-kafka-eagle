@@ -16,15 +16,15 @@ import org.smartloli.kafka.eagle.web.constant.KafkaConstants;
 import org.smartloli.kafka.eagle.web.protocol.KafkaBrokerInfo;
 import org.smartloli.kafka.eagle.web.service.KafkaService;
 import org.smartloli.kafka.eagle.web.support.*;
-import org.smartloli.kafka.eagle.web.support.factory.PooledKafkaClientFactory;
-import org.smartloli.kafka.eagle.web.support.factory.PooledKafkaConsumerFactory;
-import org.smartloli.kafka.eagle.web.support.factory.PooledKafkaProducerFactory;
-import org.smartloli.kafka.eagle.web.support.factory.PooledZookeeperFactory;
+import org.smartloli.kafka.eagle.web.support.factory.*;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.CollectionUtils;
 
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXServiceURL;
+import java.net.MalformedURLException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -73,6 +73,7 @@ public class GlobalResourceConfig {
             poolConfig.setMinIdle(Optional.ofNullable(singleClusterConfig.getZkPoolMinIdle()).orElse(kafkaClustersConfig.getZkPoolMinIdle()));
             poolConfig.setMaxIdle(Optional.ofNullable(singleClusterConfig.getZkPoolMaxIdle()).orElse(kafkaClustersConfig.getZkPoolMaxIdle()));
             poolConfig.setMaxTotal(Optional.ofNullable(singleClusterConfig.getZkPoolMaxSize()).orElse(kafkaClustersConfig.getZkPoolMaxSize()));
+            poolConfig.setMaxWaitMillis(Optional.ofNullable(singleClusterConfig.getZkMaxWaitMs()).orElse(kafkaClustersConfig.getZkMaxWaitMs()));
             poolConfig.setTestOnBorrow(true);
             poolConfig.setTestOnReturn(true);
             poolConfig.setTestWhileIdle(true);
@@ -120,6 +121,7 @@ public class GlobalResourceConfig {
             poolConfig.setMinIdle(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMinIdle()).orElse(kafkaClustersConfig.getKafkaClientPoolMinIdle()));
             poolConfig.setMaxIdle(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxIdle()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxIdle()));
             poolConfig.setMaxTotal(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxSize()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxSize()));
+            poolConfig.setMaxWaitMillis(Optional.ofNullable(singleClusterConfig.getKafkaClientMaxWaitMs()).orElse(kafkaClustersConfig.getKafkaClientMaxWaitMs()));
             poolConfig.setTestOnBorrow(true);
             poolConfig.setTestOnReturn(true);
             poolConfig.setTestWhileIdle(true);
@@ -177,6 +179,7 @@ public class GlobalResourceConfig {
             poolConfig.setMinIdle(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMinIdle()).orElse(kafkaClustersConfig.getKafkaClientPoolMinIdle()));
             poolConfig.setMaxIdle(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxIdle()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxIdle()));
             poolConfig.setMaxTotal(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxSize()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxSize()));
+            poolConfig.setMaxWaitMillis(Optional.ofNullable(singleClusterConfig.getKafkaClientMaxWaitMs()).orElse(kafkaClustersConfig.getKafkaClientMaxWaitMs()));
             poolConfig.setTestOnBorrow(true);
             poolConfig.setTestOnReturn(true);
             poolConfig.setTestWhileIdle(true);
@@ -240,6 +243,7 @@ public class GlobalResourceConfig {
             poolConfig.setMinIdle(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMinIdle()).orElse(kafkaClustersConfig.getKafkaClientPoolMinIdle()));
             poolConfig.setMaxIdle(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxIdle()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxIdle()));
             poolConfig.setMaxTotal(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxSize()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxSize()));
+            poolConfig.setMaxWaitMillis(Optional.ofNullable(singleClusterConfig.getKafkaClientMaxWaitMs()).orElse(kafkaClustersConfig.getKafkaClientMaxWaitMs()));
             poolConfig.setTestOnBorrow(true);
             poolConfig.setTestOnReturn(true);
             poolConfig.setTestWhileIdle(true);
@@ -280,5 +284,57 @@ public class GlobalResourceConfig {
     @Bean
     public KafkaProducerTemplate kafkaProducerTemplate(Map<String, GenericObjectPool<KafkaProducer<String, String>>> kafkaProducerPoolMap) {
         return new KafkaProducerTemplate(kafkaProducerPoolMap);
+    }
+
+    /**
+     * Kafak JMX资源池
+     */
+    @Bean
+    public Map<String, GenericObjectPool<JMXConnector>> brokerInfoGenericObjectPoolMap(KafkaClustersConfig kafkaClustersConfig,
+                                                                                       KafkaService kafkaService) {
+        if (CollectionUtils.isEmpty(kafkaClustersConfig.getClusters())) {
+            throw new RuntimeException("Kafka集群配置为空,项目无法启动");
+        }
+        Map<String, List<KafkaBrokerInfo>> clusterBrokerInfoMap = kafkaService.getBrokerInfos(kafkaClustersConfig.getClusterAllAlias());
+        log.info("项目启动初始配置kafka集群Broker节点信息：{}", JSON.toJSONString(clusterBrokerInfoMap));
+        Map<String, GenericObjectPool<JMXConnector>> brokerInfoGenericObjectPoolMap = new ConcurrentHashMap<>();
+
+        for (SingleClusterConfig singleClusterConfig : kafkaClustersConfig.getClusters()) {
+            List<KafkaBrokerInfo> kafkaBrokerInfos = clusterBrokerInfoMap.get(singleClusterConfig.getAlias());
+            for (KafkaBrokerInfo kafkaBrokerInfo : kafkaBrokerInfos) {
+
+                // 开启KAFKA JMX 监控
+                if (kafkaBrokerInfo.getJmxEnabled()) {
+                    GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
+                    poolConfig.setMinIdle(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMinIdle()).orElse(kafkaClustersConfig.getKafkaClientPoolMinIdle()));
+                    poolConfig.setMaxIdle(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxIdle()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxIdle()));
+                    poolConfig.setMaxTotal(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxSize()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxSize()));
+                    poolConfig.setMaxWaitMillis(Optional.ofNullable(singleClusterConfig.getKafkaClientMaxWaitMs()).orElse(kafkaClustersConfig.getKafkaClientMaxWaitMs()));
+                    poolConfig.setTestOnBorrow(true);
+                    poolConfig.setTestOnReturn(true);
+                    poolConfig.setTestWhileIdle(true);
+                    poolConfig.setLifo(true);
+                    poolConfig.setBlockWhenExhausted(true);
+
+                    try {
+                        JMXServiceURL jmxServiceUrl = new JMXServiceURL(String.format(KafkaConstants.JMX_URL_FORMAT, kafkaBrokerInfo.getHost() + ":" + kafkaBrokerInfo.getJmxPort()));
+                        PooledJMXConnectorFactory factory = new PooledJMXConnectorFactory(jmxServiceUrl);
+                        GenericObjectPool<JMXConnector> genericObjectPool = new GenericObjectPool<>(factory, poolConfig);
+                        brokerInfoGenericObjectPoolMap.put(kafkaBrokerInfo.getJmxCacheKey(), genericObjectPool);
+                    } catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        return brokerInfoGenericObjectPoolMap;
+    }
+
+    /***
+     * kafka JMX 模板
+     */
+    @Bean
+    public JMXConnectorTemplate jmxConnectorTemplate(Map<String, GenericObjectPool<JMXConnector>> brokerInfoGenericObjectPoolMap) {
+        return new JMXConnectorTemplate(brokerInfoGenericObjectPoolMap);
     }
 }

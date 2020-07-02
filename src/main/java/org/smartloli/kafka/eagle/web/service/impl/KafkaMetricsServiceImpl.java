@@ -35,9 +35,9 @@ import org.smartloli.kafka.eagle.web.protocol.KafkaBrokerInfo;
 import org.smartloli.kafka.eagle.web.protocol.MetadataInfo;
 import org.smartloli.kafka.eagle.web.service.KafkaMetricsService;
 import org.smartloli.kafka.eagle.web.service.KafkaService;
+import org.smartloli.kafka.eagle.web.support.JMXConnectorTemplate;
 import org.smartloli.kafka.eagle.web.support.KafkaAdminClientTemplate;
 import org.smartloli.kafka.eagle.web.support.KafkaZkClientTemplate;
-import org.smartloli.kafka.eagle.web.util.JMXFactoryUtils;
 import org.smartloli.kafka.eagle.web.util.StrUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -47,11 +47,8 @@ import scala.Tuple2;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXServiceURL;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Implements KafkaMetricsService all methods.
@@ -70,6 +67,8 @@ public class KafkaMetricsServiceImpl implements KafkaMetricsService {
     private KafkaZkClientTemplate kafkaZkClientTemplate;
     @Autowired
     private KafkaAdminClientTemplate kafkaAdminClientTemplate;
+    @Autowired
+    private JMXConnectorTemplate jmxConnectorTemplate;
 
     /**
      * Kafka service interface.
@@ -122,33 +121,25 @@ public class KafkaMetricsServiceImpl implements KafkaMetricsService {
 
     @Override
     public JSONObject topicSize(String clusterAlias, String topic) {
-        String jmx = "";
-        JMXConnector connector = null;
+        JMXConnector jmxConnector = null;
         List<MetadataInfo> leaders = kafkaService.findKafkaLeader(clusterAlias, topic);
         long tpSize = 0L;
         for (MetadataInfo leader : leaders) {
-            String jni = kafkaService.getBrokerJMXFromIds(clusterAlias, leader.getLeader());
-            jmx = String.format(KafkaConstants.JMX_URL_FORMAT, jni);
+            String kafkaJmxUrl = kafkaService.getBrokerJMXFromIds(clusterAlias, leader.getLeader());
+            String jmxUrl = String.format(KafkaConstants.JMX_URL_FORMAT, kafkaJmxUrl);
             try {
-                JMXServiceURL jmxSeriverUrl = new JMXServiceURL(jmx);
-                connector = JMXFactoryUtils.connectWithTimeout(jmxSeriverUrl, 30, TimeUnit.SECONDS);
-                if (null == connector) {
+                jmxConnector = jmxConnectorTemplate.acquire(jmxUrl);
+                if (null == jmxConnector) {
                     return StrUtils.stringifyByObject(tpSize);
                 }
-                MBeanServerConnection mbeanConnection = connector.getMBeanServerConnection();
+                MBeanServerConnection mbeanConnection = jmxConnector.getMBeanServerConnection();
                 String objectName = String.format(KafkaLog.SIZE.getValue(), topic, leader.getPartitionId());
                 Object size = mbeanConnection.getAttribute(new ObjectName(objectName), KafkaLog.VALUE.getValue());
                 tpSize += Long.parseLong(size.toString());
             } catch (Exception ex) {
                 log.error("Get topic size from jmx has error", ex);
             } finally {
-                if (connector != null) {
-                    try {
-                        connector.close();
-                    } catch (IOException e) {
-                        log.error("Close jmx connector has error", e);
-                    }
-                }
+                jmxConnectorTemplate.release(jmxUrl, jmxConnector);
             }
         }
 
@@ -261,35 +252,26 @@ public class KafkaMetricsServiceImpl implements KafkaMetricsService {
     /**
      * Get kafka topic capacity size .
      */
+    @Override
     public long topicCapacity(String clusterAlias, String topic) {
-        String jmx = "";
-        JMXConnector connector = null;
+        JMXConnector jmxConnector = null;
         List<MetadataInfo> leaders = kafkaService.findKafkaLeader(clusterAlias, topic);
         long tpSize = 0L;
         for (MetadataInfo leader : leaders) {
-            String jni = kafkaService.getBrokerJMXFromIds(clusterAlias, leader.getLeader());
-            jmx = String.format(KafkaConstants.JMX_URL_FORMAT, jni);
+            String jmxUrl = kafkaService.getBrokerJMXFromIds(clusterAlias, leader.getLeader());
             try {
-                JMXServiceURL jmxServieUrl = new JMXServiceURL(jmx);
-                connector = JMXFactoryUtils.connectWithTimeout(jmxServieUrl, 30, TimeUnit.SECONDS);
-                if (null == connector) {
+                jmxConnector = jmxConnectorTemplate.acquire(jmxUrl);
+                if (null == jmxConnector) {
                     return tpSize;
                 }
-                MBeanServerConnection mbeanConnection = connector.getMBeanServerConnection();
+                MBeanServerConnection mbeanConnection = jmxConnector.getMBeanServerConnection();
                 String objectName = String.format(KafkaLog.SIZE.getValue(), topic, leader.getPartitionId());
                 Object size = mbeanConnection.getAttribute(new ObjectName(objectName), KafkaLog.VALUE.getValue());
                 tpSize += Long.parseLong(size.toString());
             } catch (Exception ex) {
-                log.error("Get topic size from jmx has error, msg is " + ex.getMessage());
-                ex.printStackTrace();
+                log.error("Get topic size from jmx has error", ex);
             } finally {
-                if (connector != null) {
-                    try {
-                        connector.close();
-                    } catch (IOException e) {
-                        log.error("Close jmx connector has error, msg is " + e.getMessage());
-                    }
-                }
+                jmxConnectorTemplate.release(jmxUrl, jmxConnector);
             }
         }
 

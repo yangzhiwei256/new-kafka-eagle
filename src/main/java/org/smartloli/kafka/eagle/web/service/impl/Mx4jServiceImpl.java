@@ -26,7 +26,8 @@ import org.smartloli.kafka.eagle.web.constant.MBeanConstants;
 import org.smartloli.kafka.eagle.web.protocol.KafkaBrokerInfo;
 import org.smartloli.kafka.eagle.web.protocol.MBeanInfo;
 import org.smartloli.kafka.eagle.web.service.Mx4jService;
-import org.smartloli.kafka.eagle.web.util.JMXFactoryUtils;
+import org.smartloli.kafka.eagle.web.support.JMXConnectorTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.management.MBeanServerConnection;
@@ -38,7 +39,7 @@ import java.util.Set;
 
 /**
  * Implements Mx4jService all method.
- * 
+ *
  * @author smartloli.
  *
  *         Created by Jul 14, 2017
@@ -47,8 +48,10 @@ import java.util.Set;
 @Service
 public class Mx4jServiceImpl implements Mx4jService {
 
-	private static final String JMX = "service:jmx:rmi:///jndi/rmi://%s/jmxrmi";
-	private static final String TOPIC_CONCAT_CHARACTER = ",topic=";
+    private static final String JMX = "service:jmx:rmi:///jndi/rmi://%s/jmxrmi";
+    private static final String TOPIC_CONCAT_CHARACTER = ",topic=";
+    @Autowired
+    private JMXConnectorTemplate jmxConnectorTemplate;
 
     /**
      * Get brokers all topics bytes in per sec.
@@ -138,32 +141,25 @@ public class Mx4jServiceImpl implements Mx4jService {
      */
     @Override
     public Map<Integer, Long> logEndOffset(KafkaBrokerInfo kafkaBrokerInfo, String topic) {
-        String mbean = "kafka.log:type=Log,name=LogEndOffset,topic=" + topic + ",partition=*";
-        JMXConnector connector = null;
-        Map<Integer, Long> endOffsets = new HashMap<>();
-        try {
-            connector = JMXFactoryUtils.connectWithTimeout(kafkaBrokerInfo);
-            MBeanServerConnection mbeanConnection = connector.getMBeanServerConnection();
-            Set<ObjectName> objectNames = mbeanConnection.queryNames(new ObjectName(mbean), null);
-            for (ObjectName objectName : objectNames) {
-                int partition = Integer.parseInt(objectName.getKeyProperty("partition"));
-                Object value = mbeanConnection.getAttribute(new ObjectName(mbean), MBeanConstants.VALUE);
-				if (value != null) {
-                    endOffsets.put(partition, Long.valueOf(value.toString()));
+        return jmxConnectorTemplate.doExecute(kafkaBrokerInfo.getJmxCacheKey(), jmxConnector -> {
+            String mbean = "kafka.log:type=Log,name=LogEndOffset,topic=" + topic + ",partition=*";
+            JMXConnector connector = null;
+            Map<Integer, Long> endOffsets = new HashMap<>();
+            try {
+                MBeanServerConnection mbeanConnection = connector.getMBeanServerConnection();
+                Set<ObjectName> objectNames = mbeanConnection.queryNames(new ObjectName(mbean), null);
+                for (ObjectName objectName : objectNames) {
+                    int partition = Integer.parseInt(objectName.getKeyProperty("partition"));
+                    Object value = mbeanConnection.getAttribute(new ObjectName(mbean), MBeanConstants.VALUE);
+                    if (value != null) {
+                        endOffsets.put(partition, Long.valueOf(value.toString()));
+                    }
                 }
+            } catch (Exception e) {
+                log.error("JMX service url[" + kafkaBrokerInfo.getHost() + ":" + kafkaBrokerInfo.getJmxPort() + "] create has error,msg is " + e.getMessage());
             }
-        } catch (Exception e) {
-            log.error("JMX service url[" + kafkaBrokerInfo.getHost()+":"+ kafkaBrokerInfo.getJmxPort() + "] create has error,msg is " + e.getMessage());
-        } finally {
-            if (connector != null) {
-                try {
-                    connector.close();
-                } catch (Exception e) {
-                    log.error("Close JMXConnector[" + kafkaBrokerInfo.getHost() + ":" + kafkaBrokerInfo.getJmxPort() + "] has error,msg is " + e.getMessage());
-                }
-            }
-        }
-        return endOffsets;
+            return endOffsets;
+        });
     }
 
     /**
@@ -246,42 +242,33 @@ public class Mx4jServiceImpl implements Mx4jService {
             return mbeanInfo;
         }
 
-        String uri = kafkaBrokerInfo.getHost() + ":" + kafkaBrokerInfo.getJmxPort();
-        JMXConnector connector = null;
-        try {
-            connector = JMXFactoryUtils.connectWithTimeout(kafkaBrokerInfo);
-            MBeanServerConnection mbeanConnection = connector.getMBeanServerConnection();
-            if (mbeanConnection.isRegistered(new ObjectName(mbeanPath))) {
-                Object fifteenMinuteRate = mbeanConnection.getAttribute(new ObjectName(mbeanPath), MBeanConstants.FIFTEEN_MINUTE_RATE);
-                Object fiveMinuteRate = mbeanConnection.getAttribute(new ObjectName(mbeanPath), MBeanConstants.FIVE_MINUTE_RATE);
-                Object meanRate = mbeanConnection.getAttribute(new ObjectName(mbeanPath), MBeanConstants.MEAN_RATE);
-                Object oneMinuteRate = mbeanConnection.getAttribute(new ObjectName(mbeanPath), MBeanConstants.ONE_MINUTE_RATE);
-                mbeanInfo.setFifteenMinute(fifteenMinuteRate.toString());
-                mbeanInfo.setFiveMinute(fiveMinuteRate.toString());
-                mbeanInfo.setMeanRate(meanRate.toString());
-                mbeanInfo.setOneMinute(oneMinuteRate.toString());
-            } else {
+        return jmxConnectorTemplate.doExecute(kafkaBrokerInfo.getJmxCacheKey(), jmxConnector -> {
+            try {
+                MBeanServerConnection mbeanConnection = jmxConnector.getMBeanServerConnection();
+                if (mbeanConnection.isRegistered(new ObjectName(mbeanPath))) {
+                    Object fifteenMinuteRate = mbeanConnection.getAttribute(new ObjectName(mbeanPath), MBeanConstants.FIFTEEN_MINUTE_RATE);
+                    Object fiveMinuteRate = mbeanConnection.getAttribute(new ObjectName(mbeanPath), MBeanConstants.FIVE_MINUTE_RATE);
+                    Object meanRate = mbeanConnection.getAttribute(new ObjectName(mbeanPath), MBeanConstants.MEAN_RATE);
+                    Object oneMinuteRate = mbeanConnection.getAttribute(new ObjectName(mbeanPath), MBeanConstants.ONE_MINUTE_RATE);
+                    mbeanInfo.setFifteenMinute(fifteenMinuteRate.toString());
+                    mbeanInfo.setFiveMinute(fiveMinuteRate.toString());
+                    mbeanInfo.setMeanRate(meanRate.toString());
+                    mbeanInfo.setOneMinute(oneMinuteRate.toString());
+                } else {
+                    mbeanInfo.setFifteenMinute("0.0");
+                    mbeanInfo.setFiveMinute("0.0");
+                    mbeanInfo.setMeanRate("0.0");
+                    mbeanInfo.setOneMinute("0.0");
+                }
+            } catch (Exception e) {
+                log.error("JMX service url[" + kafkaBrokerInfo.getHost() + ":" + kafkaBrokerInfo.getJmxPort() + "] create has error", e);
                 mbeanInfo.setFifteenMinute("0.0");
                 mbeanInfo.setFiveMinute("0.0");
                 mbeanInfo.setMeanRate("0.0");
                 mbeanInfo.setOneMinute("0.0");
             }
-        } catch (Exception e) {
-            log.error("JMX service url[" + uri + "] create has error", e);
-            mbeanInfo.setFifteenMinute("0.0");
-            mbeanInfo.setFiveMinute("0.0");
-            mbeanInfo.setMeanRate("0.0");
-            mbeanInfo.setOneMinute("0.0");
-        } finally {
-            if (connector != null) {
-                try {
-                    connector.close();
-                } catch (Exception e) {
-                    log.error("Close JMXConnector[" + uri + "] has error", e);
-                }
-            }
-        }
-        return mbeanInfo;
+            return mbeanInfo;
+        });
     }
 
 }

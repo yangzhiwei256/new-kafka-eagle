@@ -56,9 +56,9 @@ public class KafkaZkClientTemplate implements ResourceManage<String, KafkaZkClie
 
     @Override
     public void release(String kafkaClusterName, KafkaZkClient kafkaZkClient) {
-        GenericObjectPool<KafkaZkClient> kafkaZkClientGenericObjectPool = kafkaZookeeperPoolMap.get(kafkaClusterName);
-        if (kafkaZkClient != null) {
-            kafkaZkClientGenericObjectPool.returnObject(kafkaZkClient);
+        if (null == kafkaZookeeperPoolMap.get(kafkaClusterName) || null == kafkaZkClient) {
+            return;
         }
+        kafkaZookeeperPoolMap.get(kafkaClusterName).returnObject(kafkaZkClient);
     }
 }

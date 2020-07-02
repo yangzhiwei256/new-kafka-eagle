@@ -58,6 +58,10 @@ public class SingleClusterConfig {
      **/
     private Integer zkSessionTimeoutMs;
     /**
+     * 资源池获取最长等待时间
+     **/
+    private Integer zkMaxWaitMs = 10000;
+    /**
      * Kafka Client 最大连接数
      **/
     private Integer kafkaClientPoolMaxSize;
@@ -69,6 +73,10 @@ public class SingleClusterConfig {
      * kafka 客户端最大连接数
      **/
     private Integer kafkaClientPoolMaxIdle;
+    /**
+     * 资源池获取最长等待时间
+     **/
+    private Integer kafkaClientMaxWaitMs = 10000;
     /**
      * kafka消息发送错误重试次数
      **/
