@@ -72,7 +72,7 @@ function bootstrapSingleNode() {
 
     ## 节点配置
     ## bootstrap single node
-    nohup zkServer.sh start "${ZOOKEEPER_NODE_BASE_PATH}/${SERVER_SAMPLE_FILE_NAME}" > /dev/null &
+    zkServer.sh start "${ZOOKEEPER_NODE_BASE_PATH}/${SERVER_SAMPLE_FILE_NAME}"
     echo "===> finish bootstrap zookeeper ${index} node"
 }
 

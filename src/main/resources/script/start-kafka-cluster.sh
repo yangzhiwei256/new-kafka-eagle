@@ -63,7 +63,7 @@ function bootstrapSingleNode() {
 
     ## bootstrap single node
     echo "command exec args：${KAFKA_NODE_BASE_PATH}/${SERVER_PROPERTIES}, JMX_PORT: ${JMX_PORT}"
-    nohup kafka-server-start.sh "${KAFKA_NODE_BASE_PATH}/${SERVER_PROPERTIES}" > /dev/null &
+    kafka-server-start.sh -daemon "${KAFKA_NODE_BASE_PATH}/${SERVER_PROPERTIES}"
     echo "===> finish bootstrap kafka ${index} node"
 }
 
