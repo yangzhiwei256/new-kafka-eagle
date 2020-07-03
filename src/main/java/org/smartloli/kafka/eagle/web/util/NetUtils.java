@@ -17,15 +17,14 @@
  */
 package org.smartloli.kafka.eagle.web.util;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.net.telnet.TelnetClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.smartloli.kafka.eagle.web.constant.ServerDevice;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
 
 /**
  * Check whether the corresponding port on the server can be accessed.
@@ -40,27 +39,23 @@ public class NetUtils {
 
     /** Check server host & port whether normal. */
     public static boolean telnet(String host, int port) {
-        Socket socket = new Socket();
-        try {
-            socket.setReceiveBufferSize(ServerDevice.BUFFER_SIZE);
-            socket.setSoTimeout(ServerDevice.TIME_OUT);
-        } catch (Exception ex) {
-            LOG.error("Socket create failed.", ex);
+        if (StringUtils.isEmpty(host) || 0 == port) {
+            return false;
         }
-        SocketAddress address = new InetSocketAddress(host, port);
+        TelnetClient client = new TelnetClient();
         try {
-            socket.connect(address, ServerDevice.TIME_OUT);
+            client.connect(host, port);
             return true;
         } catch (IOException e) {
-            LOG.error("Telnet [" + host + ":" + port + "] has crash,please check it.", e);
+            e.printStackTrace();
             return false;
         } finally {
-            if (socket != null) {
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    LOG.error("Close socket [" + host + ":" + port + "] has error.", e);
+            try {
+                if (client.isConnected()) {
+                    client.disconnect();
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }

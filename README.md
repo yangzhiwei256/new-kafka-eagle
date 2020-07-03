@@ -14,6 +14,7 @@
 期望:
 - 新增Kafka主题消息实时更新
 - AngularJS框架替换JQuery
+- 邮件告警完整支持
 
 ---
 Kafka工具：

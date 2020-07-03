@@ -681,26 +681,27 @@ public class AlarmController {
 			}
 		}
 
-		HttpSession session = request.getSession();
-		String clusterAlias = session.getAttribute(KafkaConstants.CLUSTER_ALIAS).toString();
+        HttpSession session = request.getSession();
+        String clusterAlias = session.getAttribute(KafkaConstants.CLUSTER_ALIAS).toString();
 
-		Map<String, Object> map = new HashMap<>();
-		map.put("search", "%" + search + "%");
-		map.put("start", iDisplayStart);
-		map.put("size", iDisplayLength);
-		map.put("cluster", clusterAlias);
+        Map<String, Object> map = new HashMap<>();
+        map.put("search", "%" + search + "%");
+        map.put("start", iDisplayStart);
+        map.put("size", iDisplayLength);
+        map.put("cluster", clusterAlias);
 
-		JSONArray configList = JSON.parseArray(alertService.getAlarmConfigList(map).toString());
-		JSONArray aaDatas = new JSONArray();
+        List<AlarmConfigInfo> alarmConfigInfos = alertService.getAlarmConfigList(map);
+        JSONArray configList = JSON.parseArray(JSON.toJSONString(alarmConfigInfos));
+        JSONArray aaDatas = new JSONArray();
 
-		for (Object object : configList) {
-			JSONObject config = (JSONObject) object;
-			JSONObject obj = new JSONObject();
-			String alarmGroup = StrUtils.convertNull(config.getString("alarmGroup"));
-			String url = StrUtils.convertNull(config.getString("alarmUrl"));
-			String address = StrUtils.convertNull(config.getString("alarmAddress"));
-			obj.put("cluster", config.getString("cluster"));
-			obj.put("alarmGroup", alarmGroup.length() > 16 ? alarmGroup.substring(0, 16) + "..." : alarmGroup);
+        for (Object object : configList) {
+            JSONObject config = (JSONObject) object;
+            JSONObject obj = new JSONObject();
+            String alarmGroup = StrUtils.convertNull(config.getString("alarmGroup"));
+            String url = StrUtils.convertNull(config.getString("alarmUrl"));
+            String address = StrUtils.convertNull(config.getString("alarmAddress"));
+            obj.put("cluster", config.getString("cluster"));
+            obj.put("alarmGroup", alarmGroup.length() > 16 ? alarmGroup.substring(0, 16) + "..." : alarmGroup);
 			obj.put("alarmType", config.getString("alarmType"));
 			obj.put("alarmUrl", "<a name='ke_alarm_config_detail' href='#" + alarmGroup + "/url'>" + (url.length() > 16 ? url.substring(0, 16) + "..." : url) + "</a>");
 			obj.put("httpMethod", config.getString("httpMethod"));

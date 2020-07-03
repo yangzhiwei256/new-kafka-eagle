@@ -30,6 +30,7 @@
         <version.druid>1.1.10</version.druid>
         <version.commons-pool2>2.3</version.commons-pool2>
         <version.dom4j>1.6.1</version.dom4j>
+        <version.commons-net>3.6</version.commons-net>
     </properties>
 
 	<dependencies>
@@ -134,6 +135,11 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
             <version>${version.commons-pool2}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-net</groupId>
+            <artifactId>commons-net</artifactId>
+            <version>${version.commons-net}</version>
         </dependency>
         <dependency>
             <groupId>dom4j</groupId>
