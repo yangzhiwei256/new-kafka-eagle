@@ -74,11 +74,11 @@ public class GlobalResourceConfig {
             poolConfig.setMaxIdle(Optional.ofNullable(singleClusterConfig.getZkPoolMaxIdle()).orElse(kafkaClustersConfig.getZkPoolMaxIdle()));
             poolConfig.setMaxTotal(Optional.ofNullable(singleClusterConfig.getZkPoolMaxSize()).orElse(kafkaClustersConfig.getZkPoolMaxSize()));
             poolConfig.setMaxWaitMillis(Optional.ofNullable(singleClusterConfig.getZkMaxWaitMs()).orElse(kafkaClustersConfig.getZkMaxWaitMs()));
-            poolConfig.setTestOnBorrow(true);
-            poolConfig.setTestOnReturn(true);
-            poolConfig.setTestWhileIdle(true);
+            poolConfig.setTestOnBorrow(false);
+            poolConfig.setTestOnReturn(false);
+            poolConfig.setTestWhileIdle(false);
             poolConfig.setLifo(true);
-            poolConfig.setBlockWhenExhausted(true);
+            poolConfig.setBlockWhenExhausted(false);
             PooledZookeeperFactory factory = new PooledZookeeperFactory(singleClusterConfig.getZkList(),
                     KafkaConstants.METRIC_GROUP_NAME,
                     Optional.ofNullable(singleClusterConfig.getZkConnectTimeoutMs()).orElse(kafkaClustersConfig.getZkConnectTimeoutMs()),
@@ -122,11 +122,11 @@ public class GlobalResourceConfig {
             poolConfig.setMaxIdle(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxIdle()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxIdle()));
             poolConfig.setMaxTotal(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxSize()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxSize()));
             poolConfig.setMaxWaitMillis(Optional.ofNullable(singleClusterConfig.getKafkaClientMaxWaitMs()).orElse(kafkaClustersConfig.getKafkaClientMaxWaitMs()));
-            poolConfig.setTestOnBorrow(true);
-            poolConfig.setTestOnReturn(true);
-            poolConfig.setTestWhileIdle(true);
+            poolConfig.setTestOnBorrow(false);
+            poolConfig.setTestOnReturn(false);
+            poolConfig.setTestWhileIdle(false);
             poolConfig.setLifo(true);
-            poolConfig.setBlockWhenExhausted(true);
+            poolConfig.setBlockWhenExhausted(false);
 
             String bootstrapServers = clusterBrokerInfoMap.get(singleClusterConfig.getAlias()).stream()
                     .map(kafkaBrokerInfo -> kafkaBrokerInfo.getHost() + ":" + kafkaBrokerInfo.getPort()).collect(Collectors.joining(","));
@@ -180,11 +180,11 @@ public class GlobalResourceConfig {
             poolConfig.setMaxIdle(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxIdle()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxIdle()));
             poolConfig.setMaxTotal(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxSize()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxSize()));
             poolConfig.setMaxWaitMillis(Optional.ofNullable(singleClusterConfig.getKafkaClientMaxWaitMs()).orElse(kafkaClustersConfig.getKafkaClientMaxWaitMs()));
-            poolConfig.setTestOnBorrow(true);
-            poolConfig.setTestOnReturn(true);
-            poolConfig.setTestWhileIdle(true);
+            poolConfig.setTestOnBorrow(false);
+            poolConfig.setTestOnReturn(false);
+            poolConfig.setTestWhileIdle(false);
             poolConfig.setLifo(true);
-            poolConfig.setBlockWhenExhausted(true);
+            poolConfig.setBlockWhenExhausted(false);
 
             String bootstrapServers = clusterBrokerInfoMap.get(singleClusterConfig.getAlias()).stream()
                     .map(kafkaBrokerInfo -> kafkaBrokerInfo.getHost() + ":" + kafkaBrokerInfo.getPort()).collect(Collectors.joining(","));
@@ -244,11 +244,11 @@ public class GlobalResourceConfig {
             poolConfig.setMaxIdle(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxIdle()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxIdle()));
             poolConfig.setMaxTotal(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxSize()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxSize()));
             poolConfig.setMaxWaitMillis(Optional.ofNullable(singleClusterConfig.getKafkaClientMaxWaitMs()).orElse(kafkaClustersConfig.getKafkaClientMaxWaitMs()));
-            poolConfig.setTestOnBorrow(true);
-            poolConfig.setTestOnReturn(true);
-            poolConfig.setTestWhileIdle(true);
+            poolConfig.setTestOnBorrow(false);
+            poolConfig.setTestOnReturn(false);
+            poolConfig.setTestWhileIdle(false);
             poolConfig.setLifo(true);
-            poolConfig.setBlockWhenExhausted(true);
+            poolConfig.setBlockWhenExhausted(false);
 
             String bootstrapServers = clusterBrokerInfoMap.get(singleClusterConfig.getAlias()).stream()
                     .map(kafkaBrokerInfo -> kafkaBrokerInfo.getHost() + ":" + kafkaBrokerInfo.getPort()).collect(Collectors.joining(","));
@@ -310,11 +310,11 @@ public class GlobalResourceConfig {
                     poolConfig.setMaxIdle(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxIdle()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxIdle()));
                     poolConfig.setMaxTotal(Optional.ofNullable(singleClusterConfig.getKafkaClientPoolMaxSize()).orElse(kafkaClustersConfig.getKafkaClientPoolMaxSize()));
                     poolConfig.setMaxWaitMillis(Optional.ofNullable(singleClusterConfig.getKafkaClientMaxWaitMs()).orElse(kafkaClustersConfig.getKafkaClientMaxWaitMs()));
-                    poolConfig.setTestOnBorrow(true);
-                    poolConfig.setTestOnReturn(true);
-                    poolConfig.setTestWhileIdle(true);
+                    poolConfig.setTestOnBorrow(false);
+                    poolConfig.setTestOnReturn(false);
+                    poolConfig.setTestWhileIdle(false);
                     poolConfig.setLifo(true);
-                    poolConfig.setBlockWhenExhausted(true);
+                    poolConfig.setBlockWhenExhausted(false);
 
                     try {
                         JMXServiceURL jmxServiceUrl = new JMXServiceURL(String.format(KafkaConstants.JMX_URL_FORMAT, kafkaBrokerInfo.getHost() + ":" + kafkaBrokerInfo.getJmxPort()));

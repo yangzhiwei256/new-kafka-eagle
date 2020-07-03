@@ -69,7 +69,12 @@ public class KafkaBrokerInfo {
      */
     private Boolean jmxEnabled = false;
 
-    private String jmxCacheKey = host + ":" + jmxPort;
+    /**
+     * 获取Jmx缓存键值
+     **/
+    public String getJmxCacheKey() {
+        return this.getHost() + ":" + this.getJmxPort();
+    }
 
     public String toString() {
         return JSON.toJSONString(this);

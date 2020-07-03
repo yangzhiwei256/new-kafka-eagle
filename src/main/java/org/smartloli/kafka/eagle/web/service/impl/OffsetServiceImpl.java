@@ -145,14 +145,17 @@ public class OffsetServiceImpl implements OffsetService {
 		return kafkaService.findTopicExistInGroup(clusterAlias, topic, group);
 	}
 
-	/** Judge group & topic exist Kafka topic or KafkaConstants. */
-	public boolean hasGroupTopic(String clusterAlias, String formatter, String group, String topic) {
-		if ("kafka".equals(formatter)) {
-			return hasKafkaGroupTopic(clusterAlias, group, topic);
-		} else {
-			return hasGroupTopic(clusterAlias, group, topic);
-		}
-	}
+	/**
+     * Judge group & topic exist Kafka topic or KafkaConstants.
+     */
+    @Override
+    public boolean hasGroupTopic(String clusterAlias, String formatter, String group, String topic) {
+        if ("kafka".equals(formatter)) {
+            return hasKafkaGroupTopic(clusterAlias, group, topic);
+        } else {
+            return hasGroupTopic(clusterAlias, group, topic);
+        }
+    }
 
 	/** Judge group & topic from Kafka topic has exist. */
 	private boolean hasKafkaGroupTopic(String clusterAlias, String group, String topic) {

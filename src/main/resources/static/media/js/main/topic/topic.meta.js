@@ -1,7 +1,7 @@
 $(document).ready(
 		function() {
 			var url = window.location.href;
-			var topicName = url.split("meta/")[1].split("/")[0];
+			var topicName = url.split("meta/")[1].split("/")[1];
 
 			$("#result").dataTable({
 				"searching" : false,

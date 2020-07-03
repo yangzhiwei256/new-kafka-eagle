@@ -126,9 +126,8 @@ public class KafkaMetricsServiceImpl implements KafkaMetricsService {
         long tpSize = 0L;
         for (MetadataInfo leader : leaders) {
             String kafkaJmxUrl = kafkaService.getBrokerJMXFromIds(clusterAlias, leader.getLeader());
-            String jmxUrl = String.format(KafkaConstants.JMX_URL_FORMAT, kafkaJmxUrl);
             try {
-                jmxConnector = jmxConnectorTemplate.acquire(jmxUrl);
+                jmxConnector = jmxConnectorTemplate.acquire(kafkaJmxUrl);
                 if (null == jmxConnector) {
                     return StrUtils.stringifyByObject(tpSize);
                 }
@@ -139,7 +138,7 @@ public class KafkaMetricsServiceImpl implements KafkaMetricsService {
             } catch (Exception ex) {
                 log.error("Get topic size from jmx has error", ex);
             } finally {
-                jmxConnectorTemplate.release(jmxUrl, jmxConnector);
+                jmxConnectorTemplate.release(kafkaJmxUrl, jmxConnector);
             }
         }
 

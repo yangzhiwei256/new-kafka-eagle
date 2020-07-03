@@ -248,7 +248,6 @@ public class TopicServiceImpl implements TopicService {
         List<KafkaBrokerInfo> brokers = kafkaService.getBrokerInfos(clusterAlias);
         Map<String, MBeanInfo> mbeans = new HashMap<>();
         for (KafkaBrokerInfo broker : brokers) {
-            String uri = broker.getHost() + ":" + broker.getJmxPort();
             MBeanInfo bytesIn = mx4jService.bytesInPerSec(broker, topic);
             MBeanInfo bytesOut = mx4jService.bytesOutPerSec(broker, topic);
             MBeanInfo bytesRejected = mx4jService.bytesRejectedPerSec(broker, topic);

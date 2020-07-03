@@ -623,6 +623,7 @@ public class KafkaServiceImpl implements KafkaService {
     /**
      * Get kafka 0.10.x, 1.x, 2.x consumer topic information.
      */
+    @Override
     public Set<String> getKafkaConsumerTopic(String clusterAlias, String group) {
         JSONArray consumerGroups = getKafkaMetadata(clusterAlias, group);
         Set<String> topics = new HashSet<>();
@@ -894,6 +895,7 @@ public class KafkaServiceImpl implements KafkaService {
     /**
      * Get group consumer all topics lags.
      */
+    @Override
     public long getLag(String clusterAlias, String group, String topic) {
         long lag = 0L;
         try {
