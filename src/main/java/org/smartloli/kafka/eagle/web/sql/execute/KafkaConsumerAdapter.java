@@ -17,7 +17,6 @@
  */
 package org.smartloli.kafka.eagle.web.sql.execute;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -55,40 +54,36 @@ public class KafkaConsumerAdapter {
     /**
      * Executor ksql query topic data.
      */
-    public List<JSONArray> executor(KafkaSqlInfo kafkaSql) {
+    public List<JSONObject> executor(KafkaSqlInfo kafkaSql) {
         return kafkaConsumerTemplate.doExecute(kafkaSql.getClusterAlias(), kafkaConsumer -> {
-            List<JSONArray> messages = new ArrayList<>();
+            List<JSONObject> messages = new ArrayList<>();
             List<TopicPartition> topics = new ArrayList<>();
             for (Integer partition : kafkaSql.getPartition()) {
-                TopicPartition tp = new TopicPartition(kafkaSql.getTableName(), partition);
-                topics.add(tp);
+                TopicPartition topicPartition = new TopicPartition(kafkaSql.getTableName(), partition);
+                topics.add(topicPartition);
             }
             kafkaConsumer.assign(topics);
-
-            for (TopicPartition tp : topics) {
-                Map<TopicPartition, Long> offsets = kafkaConsumer.endOffsets(Collections.singleton(tp));
-                if (offsets.get(tp) > kafkaClustersConfig.getSqlTopicRecordsMax()) {
-                    kafkaConsumer.seek(tp, offsets.get(tp) - kafkaClustersConfig.getSqlTopicRecordsMax());
+            for (TopicPartition topicPartition : topics) {
+                Map<TopicPartition, Long> offsets = kafkaConsumer.endOffsets(Collections.singleton(topicPartition));
+                if (offsets.get(topicPartition) > kafkaClustersConfig.getSqlTopicRecordsMax()) {
+                    kafkaConsumer.seek(topicPartition, offsets.get(topicPartition) - kafkaClustersConfig.getSqlTopicRecordsMax());
                 } else {
-                    kafkaConsumer.seek(tp, 0);
+                    kafkaConsumer.seek(topicPartition, 0);
                 }
             }
-            JSONArray datasets = new JSONArray();
-            boolean flag = true;
-            while (flag) {
+            while (true) {
                 ConsumerRecords<String, String> records = kafkaConsumer.poll(Duration.ofMillis(KafkaConstants.TIME_OUT));
                 for (ConsumerRecord<String, String> record : records) {
                     JSONObject object = new JSONObject();
                     object.put(TopicSchema.MSG, record.value());
                     object.put(TopicSchema.OFFSET, record.offset());
                     object.put(TopicSchema.PARTITION, record.partition());
-                    datasets.add(object);
+                    messages.add(object);
                 }
                 if (records.isEmpty()) {
-                    flag = false;
+                    break;
                 }
             }
-            messages.add(datasets);
             return messages;
         });
     }
