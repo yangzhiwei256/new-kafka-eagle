@@ -68,12 +68,12 @@ public class PooledKafkaConsumerFactory extends BasePooledObjectFactory<KafkaCon
         kafkaProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getCanonicalName());
         kafkaProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getCanonicalName());
         if (saslEnable) {
-            this.properties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, properties.getProperty(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG));
-            this.properties.put(SaslConfigs.SASL_MECHANISM, properties.getProperty(SaslConfigs.SASL_MECHANISM));
-            this.properties.put(SaslConfigs.SASL_JAAS_CONFIG, properties.getProperty(SaslConfigs.SASL_JAAS_CONFIG));
+            kafkaProperties.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, properties.getProperty(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG));
+            kafkaProperties.put(SaslConfigs.SASL_MECHANISM, properties.getProperty(SaslConfigs.SASL_MECHANISM));
+            kafkaProperties.put(SaslConfigs.SASL_JAAS_CONFIG, properties.getProperty(SaslConfigs.SASL_JAAS_CONFIG));
 
             if (!StringUtils.isEmpty(kafkaProperties.getProperty(CommonClientConfigs.CLIENT_ID_CONFIG))) {
-                this.properties.put(CommonClientConfigs.CLIENT_ID_CONFIG, properties.getProperty(CommonClientConfigs.CLIENT_ID_CONFIG));
+                kafkaProperties.put(CommonClientConfigs.CLIENT_ID_CONFIG, properties.getProperty(CommonClientConfigs.CLIENT_ID_CONFIG));
             }
         }
         return new KafkaConsumer<>(kafkaProperties);
