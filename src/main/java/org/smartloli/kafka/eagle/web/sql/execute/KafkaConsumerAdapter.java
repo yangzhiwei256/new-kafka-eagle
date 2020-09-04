@@ -80,7 +80,7 @@ public class KafkaConsumerAdapter {
                     object.put(TopicSchema.PARTITION, record.partition());
                     messages.add(object);
                 }
-                if (records.isEmpty()) {
+                if (records.isEmpty() || messages.size() >= kafkaClustersConfig.getSqlTopicRecordsMax()) {
                     break;
                 }
             }

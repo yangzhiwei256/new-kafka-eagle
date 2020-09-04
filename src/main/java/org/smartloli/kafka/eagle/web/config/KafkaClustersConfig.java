@@ -84,7 +84,7 @@ public class KafkaClustersConfig {
     /**
      * KSQL最大常洵记录数
      **/
-    private Long sqlTopicRecordsMax = 5000L;
+    private Long sqlTopicRecordsMax = 500L;
 
     /**
      * 单个Kafka集群配置
