@@ -24,22 +24,51 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * TODO
+ * KSQL 封装类
  *
  * @author smartloli.
- *
- *         Created by Feb 28, 2017
+ * @Created by Feb 28, 2017
  */
 @Data
-public class KafkaSqlInfo  {
+public class KafkaSqlInfo {
 
-    private List<Integer> partition = new ArrayList<>();
-    private String sql;
-    private String metaSql;
-    private JSONObject schema = new JSONObject();
-    private String tableName;
+    /**
+     * 主题名称
+     **/
     private String topic;
-    private boolean status;
-    private List<HostsInfo> seeds = new ArrayList<>();
+
+    /**
+     * 主题分区号
+     **/
+    private List<Integer> partition = new ArrayList<>();
+
+    /**
+     * 原始KSQL
+     **/
+    private String sql;
+
+    /**
+     * 限制访问数量
+     **/
+    private Integer limit;
+
+    /**
+     * 查询记录字段信息：例如 字段名称、字段类型
+     **/
+    private JSONObject schema = new JSONObject();
+
+    /**
+     * 判断KSQL是否有效
+     **/
+    private boolean valid;
+
+    /**
+     * kafka代理节点信息
+     **/
+    private List<HostsInfo> brokerInfos = new ArrayList<>();
+
+    /**
+     * kafka集群名称
+     **/
     private String clusterAlias;
 }

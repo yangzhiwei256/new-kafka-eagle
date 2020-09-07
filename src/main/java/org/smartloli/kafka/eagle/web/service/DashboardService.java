@@ -18,6 +18,7 @@
 package org.smartloli.kafka.eagle.web.service;
 
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import org.smartloli.kafka.eagle.web.protocol.topic.TopicLogSize;
 import org.smartloli.kafka.eagle.web.protocol.topic.TopicRank;
 
@@ -65,6 +66,8 @@ public interface DashboardService {
      */
     TopicLogSize readLastTopicLogSize(Map<String, Object> params);
 
-    /** Get os memory data. */
-    String getOSMem(Map<String, Object> params);
+    /**
+     * 查询操作系统内存占用
+     */
+    JSONObject getOSMem(Map<String, Object> params);
 }

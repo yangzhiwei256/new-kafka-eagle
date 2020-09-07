@@ -22,7 +22,11 @@ public final class KafkaConstants {
     public static final String AUTO_COMMIT_MS = "1000";
     public static final String EARLIEST = "earliest";
     public static final String JAVA_SECURITY = "java.security.auth.login.config";
-    public static final int TIME_OUT = 100;
+
+    /**
+     * 消息拉取最长时长
+     **/
+    public static final int POLL_MESSAGE_TIME_OUT_MS = 200;
 
     public static final String PARTITION_CLASS = "partitioner.class";
     public static final String KEY_SERIALIZER = "key.serializer";

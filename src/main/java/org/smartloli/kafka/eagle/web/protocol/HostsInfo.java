@@ -27,8 +27,15 @@ import lombok.Data;
  * Created by Aug 15, 2016
  */
 @Data
-public class HostsInfo  {
+public class HostsInfo {
 
+    /**
+     * kafka broker 主机名
+     **/
     private String host;
+
+    /**
+     * kafka broker 服务端口
+     **/
     private int port;
 }

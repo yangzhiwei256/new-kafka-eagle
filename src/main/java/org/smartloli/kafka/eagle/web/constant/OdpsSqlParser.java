@@ -25,7 +25,6 @@ import com.alibaba.druid.stat.TableStat.Name;
 import com.alibaba.druid.util.JdbcConstants;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -34,8 +33,7 @@ import java.util.Map;
  * and conditions.
  *
  * @author smartloli.
- *
- *         Created by May 19, 2019
+ * Created by May 19, 2019
  */
 @Slf4j
 public class OdpsSqlParser {
@@ -43,7 +41,9 @@ public class OdpsSqlParser {
     private OdpsSqlParser() {
     }
 
-    /** Parser sql mapper kafka tree. */
+    /**
+     * 解析SQL获取表名即Topic名称
+     */
     public static String parserTopic(String sql) {
         try {
             String dbType = JdbcConstants.MYSQL;
@@ -51,11 +51,9 @@ public class OdpsSqlParser {
             SQLStatement stmt = stmtList.get(0);
             OdpsSchemaStatVisitor visitor = new OdpsSchemaStatVisitor();
             stmt.accept(visitor);
-            Map<Name, TableStat> tabmap = visitor.getTables();
+            Map<Name, TableStat> tables = visitor.getTables();
             String tableName = "";
-            Iterator<Name> iterator = tabmap.keySet().iterator();
-            while (iterator.hasNext()) {
-                Name name = iterator.next();
+            for (Name name : tables.keySet()) {
                 tableName = name.toString();
             }
             return tableName.trim();

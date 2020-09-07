@@ -18,57 +18,34 @@
  */
 package org.smartloli.kafka.eagle.sql;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.smartloli.kafka.eagle.web.KafkaEagleBootstrap;
+import org.smartloli.kafka.eagle.web.entity.QueryKafkaMessage;
 import org.smartloli.kafka.eagle.web.sql.execute.KafkaSqlParser;
-import org.smartloli.kafka.eagle.web.sql.tool.JSqlUtils;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
 /**
  * Test Kafka Sql.
- * 
- * @author smartloli.
  *
- *         Created by Feb 27, 2018
+ * @author smartloli.
+ * Created by Feb 27, 2018
  */
+@Slf4j
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = KafkaEagleBootstrap.class)
 public class KSqlTest {
 
-	public static void main(String[] args) throws Exception {
-		// ignite();
-		// calcite();
-		String sql = "select * from \"KV_T\" where \"partition\" in (0)";
-		String result = new  KafkaSqlParser().execute("cluster1", sql);
-		System.out.println("result: " + result);
-	}
+    @Autowired
+    private KafkaSqlParser kafkaSqlParser;
 
-	public static void calcite() throws Exception {
-		JSONObject tabSchema = new JSONObject();
-		tabSchema.put("id", "integer");
-		tabSchema.put("name", "varchar");
-		tabSchema.put("age", "integer");
-
-		String tableName = "stu";
-
-		JSONArray dataSets = new JSONArray();
-
-		for (int i = 0; i < 5000; i++) {
-			JSONObject object = new JSONObject();
-			object.put("id", i);
-			object.put("name", "aa" + i);
-			object.put("age", 10 + i);
-			dataSets.add(object);
-		}
-
-		String sql = "select * from \"stu\" where \"id\"=0 and \"age\"=10 limit 10";
-
-		List<JSONArray> dts = new ArrayList<>();
-		dts.add(dataSets);
-		long start = System.currentTimeMillis();
-		String rs = JSqlUtils.query(tabSchema, tableName, dts, sql);
-		System.out.println("[Spent] :: " + (System.currentTimeMillis() - start) + "ms");
-		System.out.println(rs);
-	}
-
+    @Test
+    public void executeKSqlTest() {
+        String sql = "select * from MSG_EVENT_BROADCAST where `partition` in (0,1,2) limit 100";
+        QueryKafkaMessage queryKafkaMessage = kafkaSqlParser.execute("local", sql);
+        log.info("result: {}", queryKafkaMessage);
+    }
 }

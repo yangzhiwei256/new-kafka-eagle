@@ -177,33 +177,32 @@ public class DashboardServiceImpl implements DashboardService {
 
 	/** Write statistics topic rank data from kafka jmx & insert into table. */
 	public int writeTopicRank(List<TopicRank> topicRanks) {
-		return topicDao.writeTopicRank(topicRanks);
-	}
+        return topicDao.writeTopicRank(topicRanks);
+    }
 
-	/**
-	 * Write statistics topic logsize data from kafka jmx & insert into table.
-	 */
-	public int writeTopicLogSize(List<TopicLogSize> topicLogSize) {
-		return topicDao.writeTopicLogSize(topicLogSize);
-	}
+    /**
+     * Write statistics topic logsize data from kafka jmx & insert into table.
+     */
+    public int writeTopicLogSize(List<TopicLogSize> topicLogSize) {
+        return topicDao.writeTopicLogSize(topicLogSize);
+    }
 
-	/** Get os memory data. */
-	public String getOSMem(Map<String, Object> params) {
-		List<KpiInfo> kpis = mbeanDao.getOsMem(params);
-		JSONObject object = new JSONObject();
-		if (kpis.size() == 2) {
-			long valueFirst = Long.parseLong(kpis.get(0).getValue());
-			long valueSecond = Long.parseLong(kpis.get(1).getValue());
-			if (valueFirst >= valueSecond) {
-				object.put("mem", 100 * StrUtils.numberic(((valueFirst - valueSecond) * 1.0 / valueFirst) + "", "###.###"));
-			} else {
-				object.put("mem", 100 * StrUtils.numberic(((valueSecond - valueFirst) * 1.0 / valueSecond) + "", "###.###"));
-			}
-		} else {
-			object.put("mem", "0.0");
-		}
-		return object.toJSONString();
-	}
+    @Override
+    public JSONObject getOSMem(Map<String, Object> params) {
+        List<KpiInfo> kpis = mbeanDao.getOsMem(params);
+        JSONObject object = new JSONObject();
+        object.put("mem", 0.0);
+        if (kpis.size() == 2) {
+            long valueFirst = Long.parseLong(kpis.get(0).getValue());
+            long valueSecond = Long.parseLong(kpis.get(1).getValue());
+            if (valueFirst >= valueSecond && valueFirst != 0L) {
+                object.put("mem", 100 * StrUtils.numberic((valueFirst - valueSecond) * 1.0 / valueFirst, "###.###"));
+            } else if (valueSecond != 0L) {
+                object.put("mem", 100 * StrUtils.numberic((valueSecond - valueFirst) * 1.0 / valueSecond, "###.###"));
+            }
+        }
+        return object;
+    }
 
 	/** Read topic lastest logsize diffval data. */
 	public TopicLogSize readLastTopicLogSize(Map<String, Object> params) {

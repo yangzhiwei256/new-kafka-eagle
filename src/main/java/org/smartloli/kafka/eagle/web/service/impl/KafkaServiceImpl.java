@@ -361,33 +361,26 @@ public class KafkaServiceImpl implements KafkaService {
         return brokerServer.substring(0, brokerServer.length() - 1);
     }
 
-    /**
-     * Convert query sql to object.
-     */
+    @Override
     public KafkaSqlInfo parseSql(String clusterAlias, String sql) {
-        return segments(clusterAlias, prepare(sql));
-    }
+        KafkaSqlInfo kafkaSql = new KafkaSqlInfo();
+        kafkaSql.setClusterAlias(clusterAlias);
 
-    private String prepare(String sql) {
         sql = sql.trim();
         sql = sql.replaceAll("\\s+", " ");
-        return sql;
-    }
-
-    private KafkaSqlInfo segments(String clusterAlias, String sql) {
-        KafkaSqlInfo kafkaSql = new KafkaSqlInfo();
         kafkaSql.setSql(sql);
+
         kafkaSql.getSchema().put("partition", "integer");
         kafkaSql.getSchema().put("offset", "bigint");
         kafkaSql.getSchema().put("msg", "varchar");
         if (!sql.startsWith("select") && !sql.startsWith("SELECT")) {
-            kafkaSql.setStatus(false);
+            kafkaSql.setValid(false);
             return kafkaSql;
         } else {
-            String tableName = OdpsSqlParser.parserTopic(sql);
-            if (!"".equals(tableName)) {
-                kafkaSql.setStatus(true);
-                kafkaSql.setTableName(tableName);
+            String topicName = OdpsSqlParser.parserTopic(sql);
+            if (!StringUtils.isEmpty(topicName)) {
+                kafkaSql.setValid(true);
+                kafkaSql.setTopic(topicName);
             }
             sql = sql.toLowerCase();
             if (sql.contains("and")) {
@@ -395,6 +388,7 @@ public class KafkaServiceImpl implements KafkaService {
             } else if (sql.contains("group by")) {
                 sql = sql.split("group")[0];
             } else if (sql.contains("limit")) {
+                kafkaSql.setLimit(Integer.parseInt(sql.split("limit")[1].trim()));
                 sql = sql.split("limit")[0];
             }
 
@@ -410,7 +404,7 @@ public class KafkaServiceImpl implements KafkaService {
                         }
                     }
                 }
-                kafkaSql.setSeeds(getBrokers(clusterAlias));
+                kafkaSql.setBrokerInfos(getBrokers(clusterAlias));
             }
         }
         return kafkaSql;

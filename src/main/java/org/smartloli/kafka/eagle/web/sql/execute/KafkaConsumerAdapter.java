@@ -17,14 +17,13 @@
  */
 package org.smartloli.kafka.eagle.web.sql.execute;
 
-import com.alibaba.fastjson.JSONObject;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.TopicPartition;
 import org.smartloli.kafka.eagle.web.config.KafkaClustersConfig;
 import org.smartloli.kafka.eagle.web.constant.KafkaConstants;
+import org.smartloli.kafka.eagle.web.entity.KafkaMessage;
 import org.smartloli.kafka.eagle.web.protocol.KafkaSqlInfo;
-import org.smartloli.kafka.eagle.web.sql.schema.TopicSchema;
 import org.smartloli.kafka.eagle.web.support.KafkaConsumerTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -52,14 +51,14 @@ public class KafkaConsumerAdapter {
     private KafkaClustersConfig kafkaClustersConfig;
 
     /**
-     * Executor ksql query topic data.
+     * 执行KSQL
      */
-    public List<JSONObject> executor(KafkaSqlInfo kafkaSql) {
+    public List<KafkaMessage> executor(KafkaSqlInfo kafkaSql) {
         return kafkaConsumerTemplate.doExecute(kafkaSql.getClusterAlias(), kafkaConsumer -> {
-            List<JSONObject> messages = new ArrayList<>();
+            List<KafkaMessage> messages = new ArrayList<>();
             List<TopicPartition> topics = new ArrayList<>();
             for (Integer partition : kafkaSql.getPartition()) {
-                TopicPartition topicPartition = new TopicPartition(kafkaSql.getTableName(), partition);
+                TopicPartition topicPartition = new TopicPartition(kafkaSql.getTopic(), partition);
                 topics.add(topicPartition);
             }
             kafkaConsumer.assign(topics);
@@ -72,13 +71,18 @@ public class KafkaConsumerAdapter {
                 }
             }
             while (true) {
-                ConsumerRecords<String, String> records = kafkaConsumer.poll(Duration.ofMillis(KafkaConstants.TIME_OUT));
+                ConsumerRecords<String, String> records = kafkaConsumer.poll(Duration.ofMillis(KafkaConstants.POLL_MESSAGE_TIME_OUT_MS));
                 for (ConsumerRecord<String, String> record : records) {
-                    JSONObject object = new JSONObject();
-                    object.put(TopicSchema.MSG, record.value());
-                    object.put(TopicSchema.OFFSET, record.offset());
-                    object.put(TopicSchema.PARTITION, record.partition());
-                    messages.add(object);
+                    KafkaMessage kafkaMessage = new KafkaMessage();
+                    kafkaMessage.setMsg(record.value());
+                    kafkaMessage.setOffset(record.offset());
+                    kafkaMessage.setPartition(record.partition());
+                    kafkaMessage.setMessageId(record.key());
+                    // limit限制校验
+                    if (null != kafkaSql.getLimit() && messages.size() >= kafkaSql.getLimit()) {
+                        break;
+                    }
+                    messages.add(kafkaMessage);
                 }
                 if (records.isEmpty() || messages.size() >= kafkaClustersConfig.getSqlTopicRecordsMax()) {
                     break;

@@ -17,6 +17,7 @@
  */
 package org.smartloli.kafka.eagle.web.service;
 
+import org.smartloli.kafka.eagle.web.entity.QueryKafkaMessage;
 import org.smartloli.kafka.eagle.web.protocol.MetadataInfo;
 import org.smartloli.kafka.eagle.web.protocol.PartitionsInfo;
 import org.smartloli.kafka.eagle.web.protocol.topic.TopicConfig;
@@ -82,13 +83,19 @@ public interface TopicService {
      */
     List<PartitionsInfo> list(String clusterAlias, Map<String, Object> params);
 
-    /** Execute kafka query sql. */
-    String execute(String clusterAlias, String sql);
+    /**
+     * Kafka集群执行KSQL
+     */
+    QueryKafkaMessage execute(String clusterAlias, String sql);
 
-    /** Get mock topics. */
+    /**
+     * Get mock topics.
+     */
     String mockTopics(String clusterAlias, String name);
 
-    /** Get manager topic property keys. */
+    /**
+     * Get manager topic property keys.
+     */
     String getTopicProperties(String clusterAlias, String name);
 
     /**

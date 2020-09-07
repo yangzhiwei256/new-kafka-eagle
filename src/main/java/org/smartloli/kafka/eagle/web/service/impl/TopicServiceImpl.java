@@ -28,6 +28,7 @@ import org.smartloli.kafka.eagle.web.constant.KafkaConstants;
 import org.smartloli.kafka.eagle.web.constant.MBeanConstants;
 import org.smartloli.kafka.eagle.web.constant.TopicConstants;
 import org.smartloli.kafka.eagle.web.dao.TopicDao;
+import org.smartloli.kafka.eagle.web.entity.QueryKafkaMessage;
 import org.smartloli.kafka.eagle.web.protocol.KafkaBrokerInfo;
 import org.smartloli.kafka.eagle.web.protocol.MBeanInfo;
 import org.smartloli.kafka.eagle.web.protocol.MetadataInfo;
@@ -146,18 +147,20 @@ public class TopicServiceImpl implements TopicService {
         return brokerService.topicMetadataRecords(clusterAlias, topicName, params);
     }
 
-	/** Execute kafka execute query sql and viewer topic message. */
-	public String execute(String clusterAlias, String sql) {
-		return kafkaSqlParser.execute(clusterAlias, sql);
-	}
+    @Override
+    public QueryKafkaMessage execute(String clusterAlias, String sql) {
+        return kafkaSqlParser.execute(clusterAlias, sql);
+    }
 
-	/** Get kafka 0.10.x mock topics. */
-	public String mockTopics(String clusterAlias, String name) {
-		List<String> topicList = brokerService.topicList(clusterAlias);
-		int offset = 0;
-		JSONArray topics = new JSONArray();
-		for (String topicName : topicList) {
-			if (name != null) {
+    /**
+     * Get kafka 0.10.x mock topics.
+     */
+    public String mockTopics(String clusterAlias, String name) {
+        List<String> topicList = brokerService.topicList(clusterAlias);
+        int offset = 0;
+        JSONArray topics = new JSONArray();
+        for (String topicName : topicList) {
+            if (name != null) {
 				JSONObject topic = new JSONObject();
 				if (topicName.contains(name) && !topicName.equals(KafkaConstants.CONSUMER_OFFSET_TOPIC)) {
 					topic.put("text", topicName);

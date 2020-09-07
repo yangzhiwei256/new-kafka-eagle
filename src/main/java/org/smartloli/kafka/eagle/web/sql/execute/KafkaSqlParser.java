@@ -17,17 +17,15 @@
  */
 package org.smartloli.kafka.eagle.web.sql.execute;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.smartloli.kafka.eagle.web.entity.KafkaMessage;
+import org.smartloli.kafka.eagle.web.entity.QueryKafkaMessage;
 import org.smartloli.kafka.eagle.web.protocol.KafkaSqlInfo;
 import org.smartloli.kafka.eagle.web.service.BrokerService;
 import org.smartloli.kafka.eagle.web.service.KafkaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,62 +36,69 @@ import java.util.List;
  *         Created by Feb 28, 2017
  */
 @Component
+@Slf4j
 public class KafkaSqlParser {
 
-	private final static Logger LOG = LoggerFactory.getLogger(KafkaSqlParser.class);
+    @Autowired
+    private KafkaService kafkaService;
 
-	@Autowired
-	private KafkaService kafkaService;
+    @Autowired
+    private KafkaConsumerAdapter kafkaConsumerAdapter;
 
-	@Autowired
-	private KafkaConsumerAdapter kafkaConsumerAdapter;
+    @Autowired
+    private BrokerService brokerService;
 
-	@Autowired
-	private BrokerService brokerService;
+    /**
+     * 执行KSQL
+     *
+     * @param clusterAlias
+     * @param sql
+     * @return
+     */
+    public QueryKafkaMessage execute(String clusterAlias, String sql) {
+        QueryKafkaMessage queryKafkaMessage = new QueryKafkaMessage();
+        try {
+            KafkaSqlInfo kafkaSql = kafkaService.parseSql(clusterAlias, sql);
+            log.info("KafkaSqlParser - SQL[" + kafkaSql.getSql() + "]");
+            if (!kafkaSql.isValid()) {
+                queryKafkaMessage.setError(true);
+                queryKafkaMessage.setStatus("ERROR - SQL[" + kafkaSql.getSql() + "] has error,please start with select.");
+                return queryKafkaMessage;
+            }
 
-	public String execute(String clusterAlias, String sql) {
-		JSONObject status = new JSONObject();
-		try {
-			KafkaSqlInfo kafkaSql = kafkaService.parseSql(clusterAlias, sql);
-			LOG.info("KafkaSqlParser - SQL[" + kafkaSql.getSql() + "]");
-			if (kafkaSql.isStatus()) {
-				if (!hasTopic(clusterAlias, kafkaSql)) {
-					status.put("error", true);
-					status.put("msg", "ERROR - Topic[" + kafkaSql.getTableName() + "] not exist.");
-				} else {
-                    long start = System.currentTimeMillis();
-                    kafkaSql.setClusterAlias(clusterAlias);
-                    List<JSONObject> dataSets = kafkaConsumerAdapter.executor(kafkaSql);
-                    String results = "";
-                    if (dataSets.size() > 0 && !dataSets.get(dataSets.size() - 1).isEmpty()) {
-                        results = JSONObject.toJSONString(dataSets);
-                    } else {
-                        List<JSONObject> schemas = new ArrayList<>();
-                        results = JSON.toJSONString(schemas);
-                    }
-                    long end = System.currentTimeMillis();
-                    status.put("error", false);
-                    status.put("msg", results);
-					status.put("status", "Finished by [" + (end - start) / 1000.0 + "s].");
-					status.put("spent", end - start);
-				}
-			} else {
-				status.put("error", true);
-				status.put("msg", "ERROR - SQL[" + kafkaSql.getSql() + "] has error,please start with select.");
-			}
-		} catch (Exception e) {
-			status.put("error", true);
-			status.put("msg", e.getMessage());
-			LOG.error("Execute sql to query kafka topic has error", e);
-		}
-		return status.toJSONString();
-	}
+            if (!hasTopic(clusterAlias, kafkaSql)) {
+                queryKafkaMessage.setError(true);
+                queryKafkaMessage.setStatus("ERROR - Topic[" + kafkaSql.getTopic() + "] not exist.");
+                return queryKafkaMessage;
+            }
 
-	private boolean hasTopic(String clusterAlias, KafkaSqlInfo kafkaSql) {
-		boolean status = brokerService.findKafkaTopic(clusterAlias, kafkaSql.getTableName());
-		if (status) {
-			kafkaSql.setTopic(kafkaSql.getTableName());
-		}
-		return status;
-	}
+            // 查询消息
+            long start = System.currentTimeMillis();
+            List<KafkaMessage> dataSets = kafkaConsumerAdapter.executor(kafkaSql);
+            long end = System.currentTimeMillis();
+
+            queryKafkaMessage.setError(false);
+            queryKafkaMessage.setData(dataSets);
+            queryKafkaMessage.setStatus("Finished by [" + (end - start) / 1000.0 + "s].");
+            queryKafkaMessage.setSpent(end - start);
+            log.info("KSQL:[{}] 查询数据量[{}],耗时:[{}]毫秒", kafkaSql.getSql(), dataSets.size(), queryKafkaMessage.getSpent());
+            return queryKafkaMessage;
+        } catch (Exception e) {
+            queryKafkaMessage.setError(true);
+            queryKafkaMessage.setStatus(e.getMessage());
+            log.error("Execute sql to query kafka topic has error", e);
+            return queryKafkaMessage;
+        }
+    }
+
+    /**
+     * Topic 校验是否存在
+     **/
+    private boolean hasTopic(String clusterAlias, KafkaSqlInfo kafkaSql) {
+        boolean status = brokerService.findKafkaTopic(clusterAlias, kafkaSql.getTopic());
+        if (status) {
+            kafkaSql.setTopic(kafkaSql.getTopic());
+        }
+        return status;
+    }
 }

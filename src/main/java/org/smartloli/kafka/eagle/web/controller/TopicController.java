@@ -23,10 +23,16 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.common.base.Strings;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.admin.ConfigEntry;
+import org.smartloli.kafka.eagle.web.config.ResponseMsg;
+import org.smartloli.kafka.eagle.web.constant.CommonConstants;
 import org.smartloli.kafka.eagle.web.constant.KafkaConstants;
 import org.smartloli.kafka.eagle.web.constant.TopicConstants;
+import org.smartloli.kafka.eagle.web.controller.vo.QueryMsgResultVo;
+import org.smartloli.kafka.eagle.web.entity.KafkaMessage;
+import org.smartloli.kafka.eagle.web.entity.QueryKafkaMessage;
 import org.smartloli.kafka.eagle.web.protocol.MetadataInfo;
 import org.smartloli.kafka.eagle.web.protocol.PartitionsInfo;
 import org.smartloli.kafka.eagle.web.protocol.topic.TopicConfig;
@@ -56,6 +62,7 @@ import java.util.*;
  * Update by hexiang 20170216
  */
 @Controller
+@Slf4j
 @Api("Kafka主题控制器")
 public class TopicController {
 
@@ -507,41 +514,44 @@ public class TopicController {
 		}
 	}
 
-	/** Logical execute kafka sql. */
-	@GetMapping("/topic/logical/commit/")
+    @GetMapping("/topic/logical/commit/")
     @ResponseBody
-    @ApiOperation("执行Kafka SQL")
-	public String topicSqlLogicalAjax(@RequestParam String sql, HttpSession session,
-									  HttpServletRequest request, @AuthenticationPrincipal UserDetails userDetails) {
-		TopicSqlHistory topicSqlHistory = new TopicSqlHistory();
+    @ApiOperation("执行KSQL")
+    public ResponseMsg topicSqlLogicalAjax(@RequestParam String sql, HttpSession session,
+                                           HttpServletRequest request, @AuthenticationPrincipal UserDetails userDetails) {
+
+        QueryMsgResultVo queryMsgResultVo = new QueryMsgResultVo();
+        TopicSqlHistory topicSqlHistory = new TopicSqlHistory();
         String clusterAlias = session.getAttribute(KafkaConstants.CLUSTER_ALIAS).toString();
-        String target = topicService.execute(clusterAlias, sql);
-        JSONObject result = JSON.parseObject(target);
         try {
+            QueryKafkaMessage queryKafkaMessage = topicService.execute(clusterAlias, sql);
+            queryMsgResultVo.setQueryKafkaMessage(queryKafkaMessage);
             topicSqlHistory.setCluster(clusterAlias);
             topicSqlHistory.setCreated(DateUtils.getCurrentDate());
             topicSqlHistory.setHost(request.getRemoteHost());
             topicSqlHistory.setKsql(sql);
-            if (result.getBoolean("error")) {
-                topicSqlHistory.setStatus("FAILED");
+
+            if (queryKafkaMessage.isError()) {
+                topicSqlHistory.setStatus(CommonConstants.FAILURE_MSG);
                 topicSqlHistory.setSpendTime(0);
             } else {
-                topicSqlHistory.setStatus("SUCCESSED");
-                topicSqlHistory.setSpendTime(result.getLongValue("spent"));
+                topicSqlHistory.setStatus(CommonConstants.SUCCESS_MSG);
+                topicSqlHistory.setSpendTime(queryKafkaMessage.getSpent());
             }
             topicSqlHistory.setTm(DateUtils.getCustomDate("yyyyMMdd"));
             topicSqlHistory.setUsername(userDetails.getUsername());
             topicService.writeTopicSqlHistory(Collections.singletonList(topicSqlHistory));
+            queryMsgResultVo.setTopicSqlHistory(topicSqlHistory);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("KSQL执行报错:[{}]", sql, e);
+            return ResponseMsg.buildFailureResponse(e.getMessage());
         }
-        return result.toJSONString();
+        return ResponseMsg.buildSuccessResponse(queryMsgResultVo);
 	}
 
-	/** Get topic page message from kafka. */
 	@GetMapping("/topic/physics/commit")
     @ResponseBody
-    @ApiOperation("获取主题数据")
+    @ApiOperation("执行KSQL")
 	public String topicSqlPhysicsAjax(@RequestParam String sql, HttpSession session, HttpServletRequest request) {
 		String aoData = request.getParameter("aoData");
 		JSONArray params = JSON.parseArray(aoData);
@@ -549,43 +559,33 @@ public class TopicController {
 		for (Object object : params) {
 			JSONObject param = (JSONObject) object;
 			if ("sEcho".equals(param.getString("name"))) {
-				sEcho = param.getIntValue("value");
-			} else if ("iDisplayStart".equals(param.getString("name"))) {
-				iDisplayStart = param.getIntValue("value");
-			} else if ("iDisplayLength".equals(param.getString("name"))) {
-				iDisplayLength = param.getIntValue("value");
-			}
-		}
+                sEcho = param.getIntValue("value");
+            } else if ("iDisplayStart".equals(param.getString("name"))) {
+                iDisplayStart = param.getIntValue("value");
+            } else if ("iDisplayLength".equals(param.getString("name"))) {
+                iDisplayLength = param.getIntValue("value");
+            }
+        }
 
-		String clusterAlias = session.getAttribute(KafkaConstants.CLUSTER_ALIAS).toString();
+        String clusterAlias = session.getAttribute(KafkaConstants.CLUSTER_ALIAS).toString();
 
-		String text = topicService.execute(clusterAlias, sql);
-		JSONObject result = JSON.parseObject(text);
+        QueryKafkaMessage queryKafkaMessage = topicService.execute(clusterAlias, sql);
+        List<KafkaMessage> aaDatas = new ArrayList<>();
+        int offset = 0;
+        for (KafkaMessage kafkaMessage : queryKafkaMessage.getData()) {
+            if (offset < (iDisplayLength + iDisplayStart) && offset >= iDisplayStart) {
+                aaDatas.add(kafkaMessage);
+            }
+            offset++;
+        }
 
-		JSONArray topics = JSON.parseArray(result.getString("msg"));
-		JSONArray aaDatas = new JSONArray();
-		int offset = 0;
-		if (topics != null) {
-			for (Object object : topics) {
-				JSONObject topic = (JSONObject) object;
-				if (offset < (iDisplayLength + iDisplayStart) && offset >= iDisplayStart) {
-					JSONObject obj = new JSONObject();
-					for (String key : topic.keySet()) {
-						obj.put(key, topic.get(key));
-					}
-					aaDatas.add(obj);
-				}
-				offset++;
-			}
-		}
-
-		JSONObject target = new JSONObject();
-		target.put("sEcho", sEcho);
-		target.put("iTotalRecords", topics.size());
-		target.put("iTotalDisplayRecords", topics.size());
-		target.put("aaData", aaDatas);
+        JSONObject target = new JSONObject();
+        target.put("sEcho", sEcho);
+        target.put("iTotalRecords", queryKafkaMessage.getData().size());
+        target.put("iTotalDisplayRecords", aaDatas.size());
+        target.put("aaData", aaDatas);
         return target.toJSONString();
-	}
+    }
 
 	/** Get topic sql history. */
 	@GetMapping("/topic/sql/history")

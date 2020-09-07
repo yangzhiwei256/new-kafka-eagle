@@ -104,28 +104,39 @@ public interface KafkaService {
 
 	/** Get kafka 0.10.x offset from topic. */
 	String getKafkaOffset(String clusterAlias);
-	
-	/** Get the data for the topic partition in the specified consumer group */
-	Map<Integer, Long> getKafkaOffset(String clusterAlias, String group, String topic, Set<Integer> partitionids);
+
+    /**
+     * Get the data for the topic partition in the specified consumer group
+     */
+    Map<Integer, Long> getKafkaOffset(String clusterAlias, String group, String topic, Set<Integer> partitionids);
 
     /**
      * 解析集群代理服务器信息
+     *
      * @param clusterAlias kafka集群名称
      * @return
      */
     String parseBrokerServer(String clusterAlias);
 
-	/** Convert query kafka to topic in the sql message for standard sql. */
-	KafkaSqlInfo parseSql(String clusterAlias, String sql);
+    /**
+     * 解析原始SQL -> KafkaSqlInfo
+     **/
+    KafkaSqlInfo parseSql(String clusterAlias, String sql);
 
-	/** Get kafka 0.10.x active consumer group & topics. */
-	Set<String> getKafkaActiverTopics(String clusterAlias, String group);
+    /**
+     * Get kafka 0.10.x active consumer group & topics.
+     */
+    Set<String> getKafkaActiverTopics(String clusterAlias, String group);
 
-	/** Get kafka 0.10.x consumer topic, maybe consumer topic owner is null. */
-	Set<String> getKafkaConsumerTopics(String clusterAlias, String group);
-	
-	/** Get kafka 0.10.x consumer group & topic information used for page. */
-	String getKafkaConsumer(String clusterAlias, DisplayInfo displayInfo);
+    /**
+     * Get kafka 0.10.x consumer topic, maybe consumer topic owner is null.
+     */
+    Set<String> getKafkaConsumerTopics(String clusterAlias, String group);
+
+    /**
+     * Get kafka 0.10.x consumer group & topic information used for page.
+     */
+    String getKafkaConsumer(String clusterAlias, DisplayInfo displayInfo);
 
     /**
      * 获取Kafka元数据信息

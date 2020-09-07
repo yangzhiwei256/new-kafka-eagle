@@ -17,6 +17,7 @@
  */
 package org.smartloli.kafka.eagle.web.controller;
 
+import com.alibaba.fastjson.JSONObject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.smartloli.kafka.eagle.web.constant.KafkaConstants;
@@ -72,18 +73,19 @@ public class DashboardController {
 
     /**
      * 获取系统内存数据
+     *
      * @param request
      */
-	@GetMapping(value = "/dash/os/mem")
+    @GetMapping(value = "/dash/os/mem")
     @ResponseBody
     @ApiOperation("获取系统内存数据")
-	public String dashOSMemAjax(HttpServletRequest request) {
-		HttpSession session = request.getSession();
-		String clusterAlias = session.getAttribute(KafkaConstants.CLUSTER_ALIAS).toString();
-		Map<String, Object> params = new HashMap<>();
+    public JSONObject dashOSMemAjax(HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        String clusterAlias = session.getAttribute(KafkaConstants.CLUSTER_ALIAS).toString();
+        Map<String, Object> params = new HashMap<>();
         params.put("cluster", clusterAlias);
         params.put("key", "os%");
         return dashboradService.getOSMem(params);
-	}
+    }
 
 }

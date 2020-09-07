@@ -92,19 +92,33 @@ public class StrUtils {
         }
     }
 
-    /** Formmatter number. */
+    /**
+     * Formmatter number.
+     */
     public static double numberic(String number) {
         DecimalFormat formatter = new DecimalFormat("###.##");
-        return Double.valueOf(formatter.format(Double.valueOf(number)));
+        return Double.parseDouble(formatter.format(Double.valueOf(number)));
     }
 
-    /** Formmatter number. */
+    /**
+     * Formmatter number.
+     */
+    public static double numberic(Double number, String format) {
+        DecimalFormat formatter = new DecimalFormat(format);
+        return Double.parseDouble(formatter.format(number));
+    }
+
+    /**
+     * Formmatter number.
+     */
     public static double numberic(String number, String format) {
         DecimalFormat formatter = new DecimalFormat(format);
-        return Double.valueOf(formatter.format(Double.valueOf(number)));
+        return Double.parseDouble(formatter.format(Double.valueOf(number)));
     }
 
-    /** Convert string number to double. */
+    /**
+     * Convert string number to double.
+     */
     public static long integer(double number) {
         return Math.round(number);
     }
