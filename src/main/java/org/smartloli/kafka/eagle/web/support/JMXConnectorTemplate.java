@@ -20,7 +20,8 @@ public class JMXConnectorTemplate implements ResourceManage<String, JMXConnector
     @Override
     public JMXConnector acquire(String brokerJmxCacheKey) {
         try {
-            return kafkaBrokerInfoGenericObjectPoolMap.get(brokerJmxCacheKey).borrowObject();
+            GenericObjectPool<JMXConnector> jmxConnectorGenericObjectPool = kafkaBrokerInfoGenericObjectPoolMap.get(brokerJmxCacheKey);
+            return null != jmxConnectorGenericObjectPool ? kafkaBrokerInfoGenericObjectPoolMap.get(brokerJmxCacheKey).borrowObject() : null;
         } catch (Exception e) {
             e.printStackTrace();
             return null;

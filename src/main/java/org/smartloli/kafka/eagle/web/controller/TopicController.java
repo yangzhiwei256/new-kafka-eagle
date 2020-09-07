@@ -31,7 +31,6 @@ import org.smartloli.kafka.eagle.web.constant.CommonConstants;
 import org.smartloli.kafka.eagle.web.constant.KafkaConstants;
 import org.smartloli.kafka.eagle.web.constant.TopicConstants;
 import org.smartloli.kafka.eagle.web.controller.vo.QueryMsgResultVo;
-import org.smartloli.kafka.eagle.web.entity.KafkaMessage;
 import org.smartloli.kafka.eagle.web.entity.QueryKafkaMessage;
 import org.smartloli.kafka.eagle.web.protocol.MetadataInfo;
 import org.smartloli.kafka.eagle.web.protocol.PartitionsInfo;
@@ -549,59 +548,23 @@ public class TopicController {
         return ResponseMsg.buildSuccessResponse(queryMsgResultVo);
 	}
 
-	@GetMapping("/topic/physics/commit")
+	/**
+     * Get topic sql history.
+     */
+    @GetMapping("/topic/sql/history")
     @ResponseBody
-    @ApiOperation("执行KSQL")
-	public String topicSqlPhysicsAjax(@RequestParam String sql, HttpSession session, HttpServletRequest request) {
-		String aoData = request.getParameter("aoData");
-		JSONArray params = JSON.parseArray(aoData);
-		int sEcho = 0, iDisplayStart = 0, iDisplayLength = 0;
-		for (Object object : params) {
-			JSONObject param = (JSONObject) object;
-			if ("sEcho".equals(param.getString("name"))) {
+    @ApiOperation("kafka sql查询历史")
+    public String topicSqlHistoryAjax(HttpServletRequest request, HttpSession session, @AuthenticationPrincipal UserDetails userDetails) {
+        String aoData = request.getParameter("aoData");
+        JSONArray params = JSON.parseArray(aoData);
+        int sEcho = 0, iDisplayStart = 0, iDisplayLength = 0;
+        String search = "";
+        for (Object object : params) {
+            JSONObject param = (JSONObject) object;
+            if ("sEcho".equals(param.getString("name"))) {
                 sEcho = param.getIntValue("value");
             } else if ("iDisplayStart".equals(param.getString("name"))) {
                 iDisplayStart = param.getIntValue("value");
-            } else if ("iDisplayLength".equals(param.getString("name"))) {
-                iDisplayLength = param.getIntValue("value");
-            }
-        }
-
-        String clusterAlias = session.getAttribute(KafkaConstants.CLUSTER_ALIAS).toString();
-
-        QueryKafkaMessage queryKafkaMessage = topicService.execute(clusterAlias, sql);
-        List<KafkaMessage> aaDatas = new ArrayList<>();
-        int offset = 0;
-        for (KafkaMessage kafkaMessage : queryKafkaMessage.getData()) {
-            if (offset < (iDisplayLength + iDisplayStart) && offset >= iDisplayStart) {
-                aaDatas.add(kafkaMessage);
-            }
-            offset++;
-        }
-
-        JSONObject target = new JSONObject();
-        target.put("sEcho", sEcho);
-        target.put("iTotalRecords", queryKafkaMessage.getData().size());
-        target.put("iTotalDisplayRecords", aaDatas.size());
-        target.put("aaData", aaDatas);
-        return target.toJSONString();
-    }
-
-	/** Get topic sql history. */
-	@GetMapping("/topic/sql/history")
-    @ResponseBody
-    @ApiOperation("kafka sql查询历史")
-	public String topicSqlHistoryAjax(HttpServletRequest request, @AuthenticationPrincipal UserDetails userDetails) {
-		String aoData = request.getParameter("aoData");
-		JSONArray params = JSON.parseArray(aoData);
-		int sEcho = 0, iDisplayStart = 0, iDisplayLength = 0;
-		String search = "";
-		for (Object object : params) {
-			JSONObject param = (JSONObject) object;
-			if ("sEcho".equals(param.getString("name"))) {
-				sEcho = param.getIntValue("value");
-			} else if ("iDisplayStart".equals(param.getString("name"))) {
-				iDisplayStart = param.getIntValue("value");
 			} else if ("iDisplayLength".equals(param.getString("name"))) {
 				iDisplayLength = param.getIntValue("value");
 			} else if ("sSearch".equals(param.getString("name"))) {
@@ -609,7 +572,6 @@ public class TopicController {
 			}
 		}
 
-		HttpSession session = request.getSession();
 		String clusterAlias = session.getAttribute(KafkaConstants.CLUSTER_ALIAS).toString();
 		Map<String, Object> map = new HashMap<>();
 		map.put("cluster", clusterAlias);
@@ -630,22 +592,22 @@ public class TopicController {
 		JSONArray aaDatas = new JSONArray();
 		if (topicSqls != null) {
 			for (TopicSqlHistory topicSql : topicSqls) {
-				JSONObject obj = new JSONObject();
-				int id = topicSql.getId();
-				String host = topicSql.getHost();
-				String ksql = topicSql.getKsql();
-				obj.put("id", id);
-				obj.put("username", topicSql.getUsername());
-				obj.put("host", "<a href='#" + id + "/host' name='ke_sql_query_detail'>" + (host.length() > 20 ? host.substring(0, 20) + "..." : host) + "</a>");
-				obj.put("ksql", "<a href='#" + id + "/ksql' name='ke_sql_query_detail'>" + (ksql.length() > 60 ? ksql.substring(0, 60) + "..." : ksql) + "</a>");
-				if (topicSql.getStatus().equals("SUCCESSED")) {
-					obj.put("status", "<a class='btn btn-success btn-xs'>" + topicSql.getStatus() + "</a>");
-				} else {
-					obj.put("status", "<a class='btn btn-danger btn-xs'>" + topicSql.getStatus() + "</a>");
-				}
-				obj.put("spendTime", topicSql.getSpendTime() / 1000.0 + "s");
-				obj.put("created", topicSql.getCreated());
-				aaDatas.add(obj);
+                JSONObject obj = new JSONObject();
+                int id = topicSql.getId();
+                String host = topicSql.getHost();
+                String ksql = topicSql.getKsql();
+                obj.put("id", id);
+                obj.put("username", topicSql.getUsername());
+                obj.put("host", "<a href='#" + id + "/host' name='ke_sql_query_detail'>" + (host.length() > 20 ? host.substring(0, 20) + "..." : host) + "</a>");
+                obj.put("ksql", "<a href='#" + id + "/ksql' name='ke_sql_query_detail'>" + (ksql.length() > 60 ? ksql.substring(0, 60) + "..." : ksql) + "</a>");
+                if (topicSql.getStatus().equalsIgnoreCase(CommonConstants.SUCCESS_MSG)) {
+                    obj.put("status", "<a class='btn btn-success btn-xs'>" + topicSql.getStatus() + "</a>");
+                } else {
+                    obj.put("status", "<a class='btn btn-danger btn-xs'>" + topicSql.getStatus() + "</a>");
+                }
+                obj.put("spendTime", topicSql.getSpendTime() / 1000.0 + "s");
+                obj.put("created", topicSql.getCreated());
+                aaDatas.add(obj);
 			}
 		}
 		JSONObject target = new JSONObject();

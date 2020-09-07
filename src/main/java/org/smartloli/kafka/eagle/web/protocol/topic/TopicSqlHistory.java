@@ -18,7 +18,7 @@
 package org.smartloli.kafka.eagle.web.protocol.topic;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import org.smartloli.kafka.eagle.web.util.DateUtils;
 
@@ -42,7 +42,7 @@ public class TopicSqlHistory {
     private String status;
     private long spendTime;
 
-    @JSONField(format = DateUtils.DATA_FORMAT_YEAR_MON_DAY_HOUR_MIN_SEC)
+    @JsonFormat(pattern = DateUtils.DATA_FORMAT_YEAR_MON_DAY_HOUR_MIN_SEC, locale = "zh", timezone = "GMT+8")
     private Date created;
 
     private String tm;

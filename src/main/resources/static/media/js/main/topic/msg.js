@@ -82,7 +82,7 @@ function displayTopicSqlHistory() {
         "sAjaxSource": '/topic/sql/history',
         "aoColumns": [
             {"mDataProp": "id"},
-            {"mDataProp": "username", "sClass": "center"},
+            {"mDataProp": "username"},
             {"mDataProp": "host"},
             {"mDataProp": "ksql"},
             {

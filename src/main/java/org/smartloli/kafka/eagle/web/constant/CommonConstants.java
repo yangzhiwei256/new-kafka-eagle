@@ -12,7 +12,7 @@ public final class CommonConstants {
     }
 
     public final static String SUCCESS_CODE = "0000";
-    public final static String SUCCESS_MSG = "success";
+    public final static String SUCCESS_MSG = "SUCCESS";
     public final static String FAILURE_CODE = "1000";
-    public final static String FAILURE_MSG = "failure";
+    public final static String FAILURE_MSG = "FAILURE";
 }
