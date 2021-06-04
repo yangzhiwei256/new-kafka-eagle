@@ -21,7 +21,7 @@
         <version.fastjson>1.2.68</version.fastjson>
         <version.commons-lang3>3.5</version.commons-lang3>
         <version.commons-io>2.6</version.commons-io>
-        <version.httpclient>4.5.6</version.httpclient>
+        <version.httpclient>4.5.13</version.httpclient>
         <verison.kafka>2.0.0</verison.kafka>
         <verison.zkClient>0.11</verison.zkClient>
         <version.mail>1.4.7</version.mail>
