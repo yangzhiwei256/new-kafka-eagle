@@ -30,7 +30,7 @@
         <version.druid>1.1.10</version.druid>
         <version.commons-pool2>2.3</version.commons-pool2>
         <version.dom4j>1.6.1</version.dom4j>
-        <version.commons-net>3.6</version.commons-net>
+        <version.commons-net>3.9.0</version.commons-net>
     </properties>
 
 	<dependencies>
